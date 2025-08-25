@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>飲料配方測驗 v4（20題制）</title>
+<style>
+  body{font-family:system-ui,"PingFang TC","Noto Sans TC",sans-serif;margin:22px;line-height:1.6}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+  #card{border:1px solid #eee;border-radius:12px;padding:18px;margin:14px 0;background:#fff}
+  .opt{border:1px solid #ddd;border-radius:10px;padding:10px 12px;margin:6px 0;cursor:pointer}
+  .opt.correct{border-color:#2ecc71;background:#eafaf0}
+  .opt.wrong{border-color:#e74c3c;background:#fdecea}
+  #meta{color:#666;font-size:12px;margin-left:auto}
+  select,button{padding:9px 12px;border-radius:8px;border:1px solid #ccc;background:#f6f6f6;cursor:pointer}
+  #footer{margin-top:12px;color:#555}
+  #summary{border:1px dashed #bbb;border-radius:10px;padding:14px;margin-top:10px;display:none}
+</style>
+</head>
+<body>
+<h2>飲料配方選擇題（20題制・每題5分）</h2>
+
+<div class="row">
+  <label>題型：</label>
+  <select id="mode">
+    <option value="mixed">混合（成分＋用量）</option>
+    <option value="amount">用量題（問某成分幾cc/g/匙/顆/罐）</option>
+    <option value="ingredient">成分題（哪一項不是這杯的成分）</option>
+  </select>
+  <button id="start">開始測驗</button>
+  <button id="next" disabled>下一題</button>
+  <span id="meta"></span>
+</div>
+
+<div id="card" style="display:none">
+  <div id="q" style="font-weight:700;font-size:20px"></div>
+  <div id="options"></div>
+  <div id="explain" style="margin-top:8px;color:#555"></div>
+</div>
+
+<div id="summary"></div>
+<div id="footer">提示：答題後會即時顯示正確選項。做完 20 題會出現成績，按「開始測驗」即可再試一次。</div>
+
+<script>
+/* ===== 你的完整配方步驟 ===== */
+const lines = `
+毛豆奶昔｜毛豆100g + 鮮奶160cc + RO + 冰塊；（糖鍵冰沙鍵） 
+酪梨鮮奶｜酪梨50g + 鮮奶140cc + 冰塊 + RO；（糖鍵酪梨鍵）
+酪梨火龍果鮮奶｜酪梨火龍果 + 鮮奶140cc + 冰塊 + RO；（糖鍵酪梨鍵） 
+甘蔗檸檬（L）｜甘蔗240cc + 檸檬20cc + RO；（糖鍵白玉甘蔗鍵）
+甘蔗檸檬（M）｜甘蔗200cc + 檸檬15cc + RO；（糖鍵白玉甘蔗鍵）
+甘蔗金桔（L）｜甘蔗240cc + 金桔20cc + 3顆金桔 + RO；（糖鍵白玉甘蔗鍵）
+甘蔗金桔（M）｜甘蔗200cc + 金桔15cc + 3顆金桔 + RO；（糖鍵白玉甘蔗鍵）
+甘蔗紅／綠／青（L）｜甘蔗160cc + 茶；（糖鍵白玉甘蔗鍵）
+甘蔗紅／綠／青（M）｜甘蔗120cc  + 茶 ；（糖鍵白玉甘蔗鍵）
+百香QQ｜百香30cc + 檸檬5cc + 波霸 + 蘆薈 + 愛玉 + RO；（糖鍵百香鍵）
+檸檬愛玉｜檸檬30cc + 愛玉 + RO；（糖鍵檸檬鍵） 
+百香愛玉｜百香30cc + 檸檬5cc + 愛玉 + RO；（糖鍵百香鍵） 
+金桔檸檬（L）｜梅汁10cc + 檸檬30cc + 金桔20cc + 百香10cc + 3顆金桔 + RO；（糖鍵檸檬鍵） 
+金桔檸檬（M）｜梅汁10cc + 檸檬20cc + 金桔10cc + 百香5cc + 3顆金桔 + RO；（糖鍵檸檬鍵） 
+葡萄柚蜜奇亞籽｜蜂蜜40cc + 葡萄柚120cc + 奇亞籽 + RO；（不額外加糖） 
+檸檬蘆薈｜檸檬40cc + 蘆薈 + RO；（糖鍵檸檬鍵） 
+柳橙蘆薈｜柳橙160cc + 蘆薈 + RO；（糖鍵柳橙鍵） 
+橙果粒｜柳橙120cc + 蘆薈 + 愛玉 + RO；（糖鍵柳橙鍵） 
+柚果粒｜葡萄柚120cc + 蘆薈 + 愛玉 + RO；（糖鍵葡萄柚鍵）  
+蜂蜜檸檬奇亞籽｜蜂蜜40cc + 檸檬30cc + 奇亞籽 + RO；（不額外加糖） 
+金鑽鳳梨雪沙｜鳳梨140g + RO + 冰塊；（糖鍵鳳梨鍵） 
+金鑽鳳梨百香｜鳳梨140g + RO + 冰塊 + 百香30cc （加入杯中）；（糖鍵鳳梨鍵） 
+金鑽鳳梨百香綠／青｜鳳梨140g + 茶100cc + 冰塊 + 百香30cc （加入杯中）；（糖鍵鳳梨鍵） 
+多多綠（L）｜多多2罐 + 茶；（糖鍵多多鍵） 
+多多綠（M）｜多多1罐 + 茶；（糖鍵多多鍵）
+檸檬多多（L）｜多多2罐 + 檸檬40cc + RO；（糖鍵多多鍵）
+檸檬多多（M）｜多多1罐 + 檸檬30cc + RO；（糖鍵多多鍵） 
+百香果多多（L）｜多多2罐 + 百香40cc + 檸檬10cc + RO；（糖鍵多多鍵）
+百香果多多（M）｜多多1罐 + 百香30cc + 檸檬5cc + RO；（糖鍵多多鍵）
+葡萄柚多多（L）｜多多2罐 + 葡萄柚160cc + RO；（糖鍵多多鍵）
+葡萄柚多多（M）｜多多1罐 + 葡萄柚120cc + RO；（糖鍵多多鍵）
+冬瓜檸檬（L）｜檸檬40cc + RO100 + 冬瓜茶；（不額外加糖） 
+冬瓜檸檬（M）｜檸檬30cc +  RO100 + 冬瓜茶；（不額外加糖） 
+冬瓜金桔（L）｜金桔40cc + RO100 + 冬瓜茶；（不額外加糖、3顆金桔） 
+冬瓜金桔（M）｜金桔30cc  + RO100 + 冬瓜茶；（不額外加糖、3顆金桔） 
+芒樂梅｜芒樂180g + RO+ 梅汁10cc + 冰塊；（糖鍵冰沙鍵）
+番茄梅｜番茄150g + RO+ 梅汁15cc + 冰塊；（糖鍵冰沙鍵）
+芒樂檸檬｜芒樂180g + RO + 梅汁5cc + 檸檬20cc + 冰塊；（糖鍵冰沙鍵）
+奇異果雪沙｜奇異果150g + RO  + 冰塊 + 檸檬5cc；（糖鍵冰沙鍵） 
+火龍果雪沙｜火龍果150g + RO + 冰塊；（糖鍵冰沙鍵）
+芒果雪沙｜芒果100g + RO + 冰塊 + 兩匙芒果丁；（糖鍵冰沙鍵） 
+芒果奶酪布丁｜RO + 冰塊 + 鮮奶50cc  + 一匙芒果丁 + 奶酪布丁（加入杯中）；（糖鍵冰沙鍵） 
+芒果芝芝奶蓋｜RO + 冰塊+ 一匙芒果丁 + 一匙奶酪布丁+ 奶蓋；（糖鍵冰沙鍵） 
+可可歐蕾（L）｜熱RO100cc + 可可2匙化開 + 鮮奶80cc + RO + 奶蓋；（糖鍵奶香鍵） 
+可可歐蕾（M）｜熱RO60cc + 可可1.5匙化開 + 鮮奶40cc + RO + 奶蓋；（糖鍵奶香鍵） 
+黑糖鮮奶（L）｜黑糖45cc + 鮮奶300cc + RO；（不額外加糖）
+黑糖鮮奶（M）｜黑糖35cc + 鮮奶220cc + RO；（不額外加糖） 
+黑糖鮮奶波霸（L）｜黑糖35cc + 波霸 + 鮮奶220cc + RO；（不額外加糖） 
+黑糖鮮奶波霸（M）｜黑糖20cc + 波霸 + 鮮奶180cc + RO；（不額外加糖） 
+黑糖奶茶（L）｜黑糖45cc + 錫蘭奶茶；（不額外加糖） 
+黑糖奶茶（M）｜黑糖40cc + 錫蘭奶茶；（不額外加糖） 
+黑糖波霸奶茶（L）｜黑糖30cc  + 波霸 + 錫蘭奶茶；（不額外加糖） 
+黑糖波霸奶茶（M）｜黑糖20cc  + 波霸  + 錫蘭奶茶；（不額外加糖） 
+黑糖芋泥鮮奶（M）｜芋泥100cc + 黑糖20cc + 鮮奶220cc；（不額外加糖） 
+紅豆鮮奶（L）｜兩匙紅豆 + 鮮奶300cc + RO；（不額外加糖） 
+紅豆鮮奶（M）｜兩匙紅豆 +  鮮奶200cc + RO；（不額外加糖） 
+紅豆波霸鮮奶（L）｜兩匙紅豆 +  波霸 + 鮮奶300cc + RO；（不額外加糖） 
+紅豆波霸鮮奶（M）｜兩匙紅豆 +  波霸 + 鮮奶200cc + RO；（不額外加糖）
+波霸鮮奶（L）｜波霸 + 鮮奶200cc + RO；（不額外加糖） 
+波霸鮮奶（M）｜波霸 +鮮奶200cc + RO；（不額外加糖）
+甘蔗鮮奶（L）｜甘蔗300cc + 鮮奶220cc + RO；（不加糖）
+甘蔗鮮奶（M）｜甘蔗200cc + 鮮奶160cc + RO；（不額外加糖）
+甘蔗鮮奶（M+料）｜甘蔗140cc + 鮮奶120cc + RO；（不額外加糖）
+阿華田鮮奶（L）｜熱RO100cc + 阿華田3匙 + 鮮奶160cc + RO；（糖鍵奶香鍵）
+阿華田鮮奶（M）｜熱RO60cc + 阿華田2匙 + 鮮奶120cc + RO；（糖鍵奶香鍵）
+阿華田鮮奶（M+料）｜熱RO60cc + 阿華田1匙 + 鮮奶80cc + RO；（糖鍵奶香鍵）
+紅/綠/青/觀音鮮奶（L）｜鮮奶180cc + 茶（糖鍵奶香鍵）
+紅/綠/青/觀音鮮奶（M）｜鮮奶140cc  + 茶（糖鍵奶香鍵）
+紅/綠/青/觀音鮮奶（M+料）｜鮮奶120cc + 茶（糖鍵奶香鍵）
+可可鮮奶（L）｜熱RO100cc + 可可2匙化開 + 鮮奶160cc + RO（糖鍵奶香鍵）
+可可鮮奶（M）｜熱RO60cc + 可可1.5匙化開 + 鮮奶140cc + RO（糖鍵奶香鍵）
+`;
+
+/* ===== 總配料庫（提供成分題用的合理選項池）===== */
+const ING_MASTER = [
+  // 基底/水
+  'RO','冰塊',
+  // 茶類
+  '紅茶','綠茶','青茶','鐵觀音','冬瓜茶','錫蘭奶茶','茶',
+  // 水果/食材
+  '鳳梨','芒果','奇異果','火龍果','番茄','酪梨','酪梨火龍果','毛豆','水蜜桃','芭樂',
+  // 調味
+  '蜂蜜','黑糖','加糖','奶精','阿華田粉','可可粉','芝麻粉','杏仁粉','水蜜桃丁','芋泥','紅豆','杏仁凍',
+  // 配料/果汁
+  '梅汁','檸檬','檸檬汁','金桔','金桔汁','柳橙','柳橙汁','甘蔗','甘蔗汁','葡萄柚','葡萄柚汁','百香','百香果汁',
+  '鮮奶','奶蓋','芒果丁','波霸','愛玉','蘆薈','仙草','奶酪布丁','奇亞籽','多多'
+];
+
+// 同義詞與清洗
+const ALIASES = {
+  'RO水':'RO', '熱RO':'RO', '冰RO':'RO',
+  '芝芝':'奶蓋',
+  '芒果（果丁）':'芒果丁', '水蜜桃（果丁）':'水蜜桃丁',
+  '百香果':'百香','檸檬汁':'檸檬','金桔汁':'金桔','柳橙汁':'柳橙','葡萄柚汁':'葡萄柚','甘蔗汁':'甘蔗'
+};
+const STOPWORDS_RE = /(補|至|去冰|加入|加料|退杯|淋上|鍵|滿|尖杯|不足|杯中|化開)/;
+
+function normalizeIngredient(s){
+  let ing = (s||'').toString().trim();
+  ing = ing.replace(/[+；;、。，（）()]/g,'').replace(/\s+/g,'');
+  if (!ing || STOPWORDS_RE.test(ing)) return null;
+  if (ALIASES[ing]) ing = ALIASES[ing];
+  ing = ing.replace(/^冰塊.*$/, '冰塊');   // 冰塊8分滿 → 冰塊
+  ing = ing.replace(/^RO\d+$/, 'RO');      // RO100 → RO
+  return ing;
+}
+
+// 中文數字轉阿拉伯
+function cn2num(txt){
+  const map = {'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  if (/^\d+$/.test(txt)) return parseInt(txt,10);
+  if (txt === '十') return 10;
+  let m = txt.match(/^(十)([一二三四五六七八九])$/); if(m) return 10+map[m[2]];
+  m = txt.match(/^([一二三四五六七八九])十([一二三四五六七八九])?$/); if(m) return map[m[1]]*10+(m[2]?map[m[2]]:0);
+  m = txt.match(/^([一二三四五六七八九])$/); if(m) return map[m[1]];
+  return NaN;
+}
+
+/* ===== 解析配方：抓成分與數量 ===== */
+function extractFacts(text){
+  const facts = [];
+  if(!text) return facts;
+
+  // 1) 「成分 數量 單位」
+  let re1 = /([\u4e00-\u9fa5A-Za-z（）()\/]+?)\s*([0-9一二兩三四五六七八九十]+)\s*(cc|g|匙|顆|罐|分)?/g;
+  let m;
+  while((m = re1.exec(text))!==null){
+    let ing = normalizeIngredient(m[1]); if(!ing) continue;
+    let numStr = m[2]; let num = /^\d+$/.test(numStr) ? parseInt(numStr,10) : cn2num(numStr);
+    let unit = m[3]||'';
+    if(ing && !isNaN(num)) facts.push({ingredient:ing, amount:num, unit});
+  }
+  // 2) 「數量 單位 成分」
+  let re2 = /([0-9一二兩三四五六七八九十]+)\s*(cc|g|匙|顆|罐|分)\s*([\u4e00-\u9fa5A-Za-z（）()\/]+?)(?=[+；;、，\s]|$)/g;
+  while((m = re2.exec(text))!==null){
+    let numStr = m[1]; let num = /^\d+$/.test(numStr) ? parseInt(numStr,10) : cn2num(numStr);
+    let unit = m[2]||''; let ing = normalizeIngredient(m[3]); if(!ing) continue;
+    if(!isNaN(num)) facts.push({ingredient:ing, amount:num, unit});
+  }
+  // 3) RO100 → 抓 100cc
+  let reRO = /RO\s*?(\d+)/g;
+  while((m = reRO.exec(text))!==null){
+    facts.push({ingredient:'RO', amount:parseInt(m[1],10), unit:'cc'});
+  }
+  // 4) 沒數字的既知配料也收進來
+  const presentByName = new Set(facts.map(f=>f.ingredient));
+  ING_MASTER.forEach(name=>{
+    const norm = normalizeIngredient(name);
+    if(norm && text.includes(name) && !presentByName.has(norm)){
+      facts.push({ingredient:norm, amount:null, unit:''});
+    }
+  });
+  // 去重
+  const uniq = {};
+  return facts.filter(f=>{
+    const key = f.ingredient + '|' + (f.amount??'') + '|' + (f.unit||'');
+    if(uniq[key]) return false; uniq[key]=1; return true;
+  });
+}
+
+/* ===== 準備題庫 ===== */
+const deck = lines.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{
+  const p = l.split(/\s*[\|｜]\s*/); return {name:p[0], formula:p[1]||""};
+});
+
+const GLOBAL_POOL = Array.from(new Set(
+  [...ING_MASTER.map(normalizeIngredient),
+   ...deck.flatMap(d=>extractFacts(d.formula).map(f=>f.ingredient))]
+)).filter(Boolean);
+
+function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+
+/* ===== 題目產生器 ===== */
+function makeAmountQuestion(item){
+  const facts = extractFacts(item.formula).filter(f=>f.unit);
+  if(!facts.length) return null;
+  const fact = pick(facts);
+  const correctText = `${fact.amount}${fact.unit}`;
+  const pool = [5,10,15,20,30,40,45,50,60,80,100,120,140,160,180,200,220,240,300];
+  const candidates = pool.filter(v=>v!==fact.amount).sort((a,b)=>Math.abs(a-fact.amount)-Math.abs(b-fact.amount));
+  const wrongs = candidates.slice(0,3).map(v=>`${v}${fact.unit}`);
+  const options = shuffle([correctText, ...wrongs]);
+  const qtext = `「${item.name}」中，<b>${fact.ingredient}</b>用量是多少？`;
+  return { type:'amount', q:qtext, options, answer:correctText, explain:`完整配方：${item.formula}` };
+}
+
+function makeIngredientQuestion(item){
+  const present = Array.from(new Set(extractFacts(item.formula).map(f=>f.ingredient))).filter(Boolean);
+  const absent = GLOBAL_POOL.filter(x=>!present.includes(x));
+  if(present.length<3 || absent.length===0) return null;
+  const answer = pick(absent);
+  const opts = shuffle([answer, ...shuffle(present).slice(0,3)]);
+  const qtext = `以下哪一項<b>不是</b>「${item.name}」的成分？`;
+  return { type:'ingredient', q:qtext, options:opts, answer, explain:`配方片段：${present.slice(0,8).join('、')}；完整：${item.formula}` };
+}
+
+function buildOne(mode){
+  let guard=0, q=null;
+  while(!q && guard<200){
+    guard++;
+    const item = pick(deck);
+    const m = (mode==='mixed') ? (Math.random()<0.5?'amount':'ingredient') : mode;
+    q = (m==='amount') ? makeAmountQuestion(item) : makeIngredientQuestion(item);
+  }
+  return q;
+}
+
+/* ===== 20題測驗邏輯 ===== */
+const TOTAL = 20, POINT = 5;
+let paper = [];     // [{q, options, answer, explain, type}]
+let idx = 0;        // 0..19
+let score = 0;
+let answered = false;
+
+function genPaper(){
+  paper = [];
+  const mode = document.getElementById('mode').value;
+  const seen = new Set();
+  let guard = 0;
+  while(paper.length < TOTAL && guard < 1000){
+    guard++;
+    const q = buildOne(mode);
+    if(!q) continue;
+    const key = q.q + '|' + q.answer;  // 簡單去重
+    if(seen.has(key)) continue;
+    seen.add(key);
+    paper.push(q);
+  }
+}
+
+function renderCurrent(){
+  if(idx >= paper.length){
+    showSummary();
+    return;
+  }
+  const q = paper[idx];
+  document.getElementById('card').style.display = 'block';
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('q').innerHTML = `第 ${idx+1} / ${TOTAL} 題｜${q.q}`;
+  const box = document.getElementById('options'); box.innerHTML='';
+  const letters = ['A','B','C','D'];
+  answered = false;
+  q.options.forEach((opt,i)=>{
+    const div = document.createElement('div');
+    div.className = 'opt';
+    div.innerHTML = `<b>${letters[i]})</b> ${opt}`;
+    div.onclick = ()=>{
+      if(answered) return;
+      answered = true;
+      [...box.children].forEach(c=>c.classList.remove('correct','wrong'));
+      if(opt===q.answer){ div.classList.add('correct'); score += POINT; }
+      else{
+        div.classList.add('wrong');
+        const idxAns = q.options.indexOf(q.answer);
+        if(idxAns>=0) box.children[idxAns].classList.add('correct');
+      }
+      document.getElementById('explain').textContent = q.explain;
+      document.getElementById('next').disabled = false;
+      updateMeta();
+    };
+    box.appendChild(div);
+  });
+  document.getElementById('explain').textContent='';
+  document.getElementById('next').disabled = true; // 需作答才可下一題
+  updateMeta();
+}
+
+function updateMeta(){
+  const done = Math.min(idx + (answered?1:0), TOTAL);
+  const maxScore = TOTAL*POINT;
+  document.getElementById('meta').textContent = `進度：${done}/${TOTAL}｜得分：${score}/${maxScore}`;
+}
+
+function showSummary(){
+  const maxScore = TOTAL*POINT;
+  const summary = document.getElementById('summary');
+  summary.style.display = 'block';
+  summary.innerHTML = `<b>本次成績：${score} 分</b>（滿分 ${maxScore}）<br>題型：${document.getElementById('mode').value}。<br><br><button id="retry">再試一次</button>`;
+  document.getElementById('card').style.display = 'none';
+  document.getElementById('next').disabled = true;
+  document.getElementById('retry').onclick = startExam;
+}
+
+function startExam(){
+  idx = 0; score = 0; answered = false;
+  genPaper();
+  renderCurrent();
+}
+
+/* ===== 綁定按鈕 ===== */
+document.getElementById('start').onclick = startExam;
+document.getElementById('next').onclick = ()=>{
+  if(!answered) return; // 未作答不給下一題
+  idx++;
+  renderCurrent();
+};
+</script>
+</body>
+</html>
