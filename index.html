@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>飲料配方測驗 v4（20題制）</title>
+<title>飲料配方測驗 v5（20題制；含多選）</title>
 <style>
   body{font-family:system-ui,"PingFang TC","Noto Sans TC",sans-serif;margin:22px;line-height:1.6}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
   #card{border:1px solid #eee;border-radius:12px;padding:18px;margin:14px 0;background:#fff}
-  .opt{border:1px solid #ddd;border-radius:10px;padding:10px 12px;margin:6px 0;cursor:pointer}
+  .opt{border:1px solid #ddd;border-radius:10px;padding:10px 12px;margin:6px 0;cursor:pointer;user-select:none}
   .opt.correct{border-color:#2ecc71;background:#eafaf0}
   .opt.wrong{border-color:#e74c3c;background:#fdecea}
+  .opt.selected{border-color:#3498db;background:#eef5ff}
   #meta{color:#666;font-size:12px;margin-left:auto}
   select,button{padding:9px 12px;border-radius:8px;border:1px solid #ccc;background:#f6f6f6;cursor:pointer}
   #footer{margin-top:12px;color:#555}
@@ -18,16 +19,17 @@
 </style>
 </head>
 <body>
-<h2>飲料配方選擇題（20題制・每題5分）</h2>
+<h2>飲料配方選擇題（20題制・每題 5 分｜含「多選：選出所有正確成分」）</h2>
 
 <div class="row">
   <label>題型：</label>
   <select id="mode">
-    <option value="mixed">混合（成分＋用量）</option>
-    <option value="amount">用量題（問某成分幾cc/g/匙/顆/罐）</option>
-    <option value="ingredient">成分題（哪一項不是這杯的成分）</option>
+    <option value="mixed">混合（多選成分＋用量）</option>
+    <option value="amount">用量題（問某成分幾 cc/g/匙/顆/罐）</option>
+    <option value="ingredients">成分題（<b>多選</b>：勾選所有正確成分）</option>
   </select>
   <button id="start">開始測驗</button>
+  <button id="submit" style="display:none">送出答案</button>
   <button id="next" disabled>下一題</button>
   <span id="meta"></span>
 </div>
@@ -39,10 +41,13 @@
 </div>
 
 <div id="summary"></div>
-<div id="footer">提示：答題後會即時顯示正確選項。做完 20 題會出現成績，按「開始測驗」即可再試一次。</div>
+<div id="footer">
+  <b>多選配分規則：</b>每題滿分 5 分。選對 1 個正確成分 + (5 / 正確數) 分；每多選 1 個錯誤成分扣 (5 / 正確數) 分，最低 0 分。<br>
+  完全勾對且沒有多選錯的，才拿滿 5 分（等同「又全對又不多選」）。
+</div>
 
 <script>
-/* ===== 你的完整配方步驟 ===== */
+/* ===== 題庫：完整配方與步驟 ===== */
 const lines = `
 毛豆奶昔｜毛豆100g + 鮮奶160cc + RO + 冰塊；（糖鍵冰沙鍵） 
 酪梨鮮奶｜酪梨50g + 鮮奶140cc + 冰塊 + RO；（糖鍵酪梨鍵）
@@ -117,7 +122,7 @@ const lines = `
 可可鮮奶（M）｜熱RO60cc + 可可1.5匙化開 + 鮮奶140cc + RO（糖鍵奶香鍵）
 `;
 
-/* ===== 總配料庫（提供成分題用的合理選項池）===== */
+/* ===== 總配料庫（提供合理選項池） ===== */
 const ING_MASTER = [
   // 基底/水
   'RO','冰塊',
@@ -231,14 +236,17 @@ function makeAmountQuestion(item){
   return { type:'amount', q:qtext, options, answer:correctText, explain:`完整配方：${item.formula}` };
 }
 
-function makeIngredientQuestion(item){
+function makeIngredientMultiQuestion(item){
   const present = Array.from(new Set(extractFacts(item.formula).map(f=>f.ingredient))).filter(Boolean);
   const absent = GLOBAL_POOL.filter(x=>!present.includes(x));
-  if(present.length<3 || absent.length===0) return null;
-  const answer = pick(absent);
-  const opts = shuffle([answer, ...shuffle(present).slice(0,3)]);
-  const qtext = `以下哪一項<b>不是</b>「${item.name}」的成分？`;
-  return { type:'ingredient', q:qtext, options:opts, answer, explain:`配方片段：${present.slice(0,8).join('、')}；完整：${item.formula}` };
+  if(present.length < 2 || absent.length===0) return null;
+  // 讓總選項落在 5~8 之間
+  const maxTotal = 8, minTotal = 5;
+  const needNoise = Math.max(0, Math.min(maxTotal - present.length, Math.max(minTotal - present.length, 0)));
+  const noise = shuffle(absent).slice(0, needNoise);
+  const options = shuffle([...present, ...noise]);
+  const qtext = `請勾選「<b>${item.name}</b>」的<b>所有正確成分</b>（多選）。`;
+  return { type:'ingredient_multi', q:qtext, options, answer:present, explain:`正確成分：${present.join('、')}；完整：${item.form法}` };
 }
 
 function buildOne(mode){
@@ -246,8 +254,8 @@ function buildOne(mode){
   while(!q && guard<200){
     guard++;
     const item = pick(deck);
-    const m = (mode==='mixed') ? (Math.random()<0.5?'amount':'ingredient') : mode;
-    q = (m==='amount') ? makeAmountQuestion(item) : makeIngredientQuestion(item);
+    const chosen = (mode==='mixed') ? (Math.random()<0.5?'amount':'ingredients') : mode;
+    q = (chosen==='amount') ? makeAmountQuestion(item) : makeIngredientMultiQuestion(item);
   }
   return q;
 }
@@ -268,7 +276,7 @@ function genPaper(){
     guard++;
     const q = buildOne(mode);
     if(!q) continue;
-    const key = q.q + '|' + q.answer;  // 簡單去重
+    const key = q.q + '|' + (Array.isArray(q.answer)?q.answer.join(','):q.answer);
     if(seen.has(key)) continue;
     seen.add(key);
     paper.push(q);
@@ -277,54 +285,101 @@ function genPaper(){
 
 function renderCurrent(){
   if(idx >= paper.length){
-    showSummary();
-    return;
+    showSummary(); return;
   }
   const q = paper[idx];
   document.getElementById('card').style.display = 'block';
   document.getElementById('summary').style.display = 'none';
   document.getElementById('q').innerHTML = `第 ${idx+1} / ${TOTAL} 題｜${q.q}`;
   const box = document.getElementById('options'); box.innerHTML='';
-  const letters = ['A','B','C','D'];
+  const letters = ['A','B','C','D','E','F','G','H'];
   answered = false;
-  q.options.forEach((opt,i)=>{
-    const div = document.createElement('div');
-    div.className = 'opt';
-    div.innerHTML = `<b>${letters[i]})</b> ${opt}`;
-    div.onclick = ()=>{
-      if(answered) return;
-      answered = true;
-      [...box.children].forEach(c=>c.classList.remove('correct','wrong'));
-      if(opt===q.answer){ div.classList.add('correct'); score += POINT; }
-      else{
-        div.classList.add('wrong');
-        const idxAns = q.options.indexOf(q.answer);
-        if(idxAns>=0) box.children[idxAns].classList.add('correct');
-      }
-      document.getElementById('explain').textContent = q.explain;
-      document.getElementById('next').disabled = false;
-      updateMeta();
-    };
-    box.appendChild(div);
-  });
+
+  if(q.type==='ingredient_multi'){
+    // 多選：點擊切換選取；顯示「送出答案」按鈕
+    q.options.forEach((opt,i)=>{
+      const div = document.createElement('div');
+      div.className = 'opt';
+      div.dataset.v = opt;
+      div.innerHTML = `<b>${letters[i]})</b> ${opt}`;
+      div.onclick = ()=>{ div.classList.toggle('selected'); };
+      box.appendChild(div);
+    });
+    document.getElementById('submit').style.display = 'inline-block';
+    document.getElementById('next').disabled = true;
+  }else{
+    // 單選：點即評分
+    q.options.forEach((opt,i)=>{
+      const div = document.createElement('div');
+      div.className = 'opt';
+      div.innerHTML = `<b>${letters[i]})</b> ${opt}`;
+      div.onclick = ()=>{
+        if(answered) return;
+        answered = true;
+        [...box.children].forEach(c=>c.classList.remove('correct','wrong','selected'));
+        if(opt===q.answer){ div.classList.add('correct'); score += POINT; }
+        else{
+          div.classList.add('wrong');
+          const idxAns = q.options.indexOf(q.answer);
+          if(idxAns>=0) box.children[idxAns].classList.add('correct');
+        }
+        document.getElementById('explain').textContent = q.explain;
+        document.getElementById('next').disabled = false;
+        updateMeta();
+      };
+      box.appendChild(div);
+    });
+    document.getElementById('submit').style.display = 'none';
+    document.getElementById('next').disabled = true;
+  }
+
   document.getElementById('explain').textContent='';
-  document.getElementById('next').disabled = true; // 需作答才可下一題
+  updateMeta();
+}
+
+function gradeMulti(){
+  const q = paper[idx];
+  if(q.type!=='ingredient_multi' || answered) return;
+  const box = document.getElementById('options');
+  const selected = [...box.children].filter(c=>c.classList.contains('selected')).map(c=>c.dataset.v);
+  const answerSet = new Set(q.answer);
+  const selSet = new Set(selected);
+
+  const trueSelected = selected.filter(x=>answerSet.has(x)).length;
+  const falseSelected = selected.filter(x=>!answerSet.has(x)).length;
+  const per = POINT / q.answer.length;
+  let gain = Math.max(0, trueSelected * per - falseSelected * per);
+  gain = Math.round(gain * 10) / 10; // 四捨五入到 0.1 分
+  score += gain;
+
+  // 標示結果
+  [...box.children].forEach(c=>{
+    const v = c.dataset.v;
+    if(answerSet.has(v)) c.classList.add('correct');
+    if(selSet.has(v) && !answerSet.has(v)) c.classList.add('wrong');
+    c.classList.remove('selected');
+  });
+
+  answered = true;
+  document.getElementById('explain').textContent = `本題得分：${gain}／${POINT} 分。${q.explain}`;
+  document.getElementById('next').disabled = false;
   updateMeta();
 }
 
 function updateMeta(){
   const done = Math.min(idx + (answered?1:0), TOTAL);
   const maxScore = TOTAL*POINT;
-  document.getElementById('meta').textContent = `進度：${done}/${TOTAL}｜得分：${score}/${maxScore}`;
+  document.getElementById('meta').textContent = `進度：${done}/${TOTAL}｜得分：${Math.round(score*10)/10}/${maxScore}`;
 }
 
 function showSummary(){
   const maxScore = TOTAL*POINT;
   const summary = document.getElementById('summary');
   summary.style.display = 'block';
-  summary.innerHTML = `<b>本次成績：${score} 分</b>（滿分 ${maxScore}）<br>題型：${document.getElementById('mode').value}。<br><br><button id="retry">再試一次</button>`;
+  summary.innerHTML = `<b>本次成績：${Math.round(score*10)/10} 分</b>（滿分 ${maxScore}）<br>題型：${document.getElementById('mode').value}。<br><br><button id="retry">再試一次</button>`;
   document.getElementById('card').style.display = 'none';
   document.getElementById('next').disabled = true;
+  document.getElementById('submit').style.display = 'none';
   document.getElementById('retry').onclick = startExam;
 }
 
@@ -338,9 +393,9 @@ function startExam(){
 document.getElementById('start').onclick = startExam;
 document.getElementById('next').onclick = ()=>{
   if(!answered) return; // 未作答不給下一題
-  idx++;
-  renderCurrent();
+  idx++; renderCurrent();
 };
+document.getElementById('submit').onclick = gradeMulti;
 </script>
 </body>
 </html>
