@@ -3,120 +3,120 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>飲料配方練習（20題｜含多選）</title>
+<title>飲料配方選擇題</title>
 <style>
-  :root{
-    --brand:#18a570;
-    --ok:#2ecc71;
-    --bad:#e74c3c;
-    --text:#1f2937;
-    --card:#ffffffee;
-    --radius:14px;
-    /* ↓ 讓背景更清楚：把白色遮罩稍微變薄 */
-    --bgOpacity:.82;
-  }
-  .bg{ position:fixed; inset:0; z-index:-3; background:center/cover no-repeat; transition:opacity 1.2s ease; }
-  .bg.hidden{ opacity:0 }
-  .scrim{ position:fixed; inset:0; z-index:-2; background:linear-gradient(rgba(255,255,255,var(--bgOpacity)),rgba(255,255,255,var(--bgOpacity))); pointer-events:none; }
+  :root{--card:#ffffff;--muted:#6b7280;--radius:14px;--brand:#10b981;--danger:#ef4444}
+  body{margin:0;font-family:system-ui,-apple-system,"PingFang TC","Noto Sans TC",Segoe UI,Roboto,sans-serif;color:#111;background:#f7f7f7}
 
-  html,body{height:100%}
-  body{ margin:0; color:var(--text); font-family:system-ui,"PingFang TC","Noto Sans TC",sans-serif; display:flex; justify-content:center; }
-  .container{ width:min(980px,92vw); padding:28px 0 48px }
+  /* 背景輪播 */
+  #bg,#bg .bg-layer,#bg-overlay{position:fixed;inset:0}
+  #bg{z-index:-3}
+  #bg .bg-layer{background:center/cover no-repeat;opacity:0;transition:opacity 1.2s ease-in-out;will-change:opacity,background-image}
+  #bg .bg-layer.show{opacity:1}
+  #bg-overlay{z-index:-2;pointer-events:none;background:linear-gradient(to bottom,rgba(255,255,255,.90) 0%,rgba(255,255,255,.86) 22%,rgba(255,255,255,.82) 55%,rgba(255,255,255,.88) 100%);backdrop-filter:blur(1px)}
 
-  .brand-logo{ position:fixed; top:16px; left:18px; z-index:5; width:min(12vw,90px); height:auto; opacity:.96; filter:drop-shadow(0 4px 10px rgba(0,0,0,.25)); pointer-events:none; }
-  .toolbar{ background:var(--card); backdrop-filter:blur(6px); border:1px solid #e5e7eb; border-radius:var(--radius); padding:14px 16px; display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  .pill{width:16px;height:16px;background:var(--brand);border-radius:9999px;margin-right:6px}
-  h1{margin:0 10px 0 0; font-size:22px}
-  select,button{font-size:16px;padding:10px 14px;border-radius:10px;border:1px solid #d1d5db;background:#f7f7f7;cursor:pointer}
-  .btn-primary{background:#11b381;color:#fff;border-color:#0f9e72}
+  /* 左上角 logo */
+  #cornerLogo{position:fixed;left:18px;top:12px;width:74px;height:auto;user-select:none;pointer-events:none;z-index:5}
+
+  .container{max-width:980px;margin:24px auto;padding:0 16px}
+
+  .toolbar{background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);box-shadow:0 1px 0 rgba(0,0,0,.02);padding:16px 18px}
+  .toolbar h1{margin:2px 0 10px;text-align:center;font-size:22px;font-weight:800;letter-spacing:2px}
+  .tools{display:flex;align-items:center;gap:10px}
+  .tools .spacer{flex:1}
+  #metaTop{color:var(--muted);font-size:14px}
+
+  .card{background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);padding:18px;margin-top:16px;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+  #ruleCard p{margin:14px 0 20px;line-height:1.9}
+  #ruleCard .badge{display:inline-block;border-radius:10px;padding:2px 8px;margin-right:6px}
+
+  select,button{font-size:16px;padding:10px 14px;border-radius:10px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+  .btn-primary{background:var(--brand);border-color:#0f9e72;color:#fff}
   .btn-ghost{background:#fff}
-  #meta{margin-left:auto;color:#6b7280;font-size:15px}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed}
 
-  .card{background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);padding:18px;margin-top:14px}
-  .rules{font-size:17px;line-height:1.85}
-  .rules .spacer{display:block;height:12px}
+  #qtitle{font-weight:800;font-size:20px;margin-bottom:8px}
+  .option{display:flex;align-items:center;gap:10px;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin:8px 0;background:#fff}
+  .option input{transform:scale(1.15)}
+  .option label{flex:1;cursor:pointer;color:#111}
+  .option.ok{background:#eafaf0;border-color:#22c55e}
+  .option.miss{background:#eafaf0;border-color:var(--danger);box-shadow:0 0 0 2px rgba(239,68,68,.35) inset}
+  .option.wrong{border-color:var(--danger);box-shadow:0 0 0 2px rgba(239,68,68,.35) inset}
 
-  #card{display:none}
-  #q{font-size:22px;font-weight:700;margin-bottom:8px}
-  .opt{ position:relative;border:1px solid #e5e7eb;border-radius:12px;padding:12px 14px;margin:9px 0;background:#fff;display:flex;align-items:center;gap:10px;transition:border .15s,background .15s,box-shadow .15s; }
-  .opt input{transform:scale(1.15)}
-  .opt.correct{background:#eafaf0;border-color:var(--ok)}
-  .opt.missed{box-shadow:inset 0 0 0 3px var(--bad)}
-  .opt.wrong{box-shadow:inset 0 0 0 2px var(--bad)}
-
-  #explain{margin-top:8px;color:#374151;font-size:16px}
-  .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:12px}
-
-  .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:13px;border:1px solid #d1d5db;background:#fff;color:#374151}
-  .badge.ok{background:#eafaf0;border-color:#2ecc71}
-  .badge.err{background:#fff;border-color:#e74c3c;color:#e74c3c}
-
-  /* ↓ 成績行加大字體 */
-  .final-score{font-size:26px;line-height:1.6}
+  #explain{color:#374151;margin-top:8px}
+  .control-row{display:flex;gap:10px;align-items:center;margin-top:10px}
+  .control-row .spacer{flex:1}
+  .scorebig{font-size:22px;font-weight:800}
 </style>
 </head>
 <body>
-  <div id="bgA" class="bg"></div>
-  <div id="bgB" class="bg hidden"></div>
-  <div class="scrim"></div>
-
-  <img class="brand-logo" src="logo.png" alt="菓點子 Fresh Idea">
+  <div id="bg">
+    <div class="bg-layer" id="bgA"></div>
+    <div class="bg-layer" id="bgB"></div>
+  </div>
+  <div id="bg-overlay"></div>
+  <img id="cornerLogo" src="logo.png" alt="logo">
 
   <div class="container">
     <div class="toolbar">
-      <span class="pill"></span><h1>飲料配方選擇題（20題・每題 5 分｜含多選）</h1>
-      <label>題型：</label>
-      <select id="mode">
-        <option value="mixed">混合（多選成分＋用量）</option>
-        <option value="amount">用量題（問某成分幾 cc / g / 匙 / 罐 / 顆）</option>
-        <option value="multi">多選成分（請勾選所有正確成分）</option>
-      </select>
-      <button id="start" class="btn-primary">開始測驗</button>
-      <span id="meta">進度：0/20｜得分：0/100</span>
-    </div>
-
-    <div class="card">
-      <div class="rules">
-        <div>規則：20 題，每題 5 分。</div>
-        <span class="spacer"></span>
-        <div>多選題評分：每題滿分 5 分，正確選一項得 <b>5 / 正確數</b> 分；每多選一個錯誤扣同額（最低 0 分）。</div>
-        <div>標示：
-          <span class="badge ok">綠底＝正確成分</span>
-          <span class="badge err">紅框＝勾錯或漏選</span>
+      <h1>飲料配方選擇題</h1>
+      <div class="tools">
+        <div style="display:flex;align-items:center;gap:10px">
+          <label>題型：</label>
+          <select id="mode">
+            <option value="mixed">混合（多選成分＋用量）</option>
+            <option value="ingredient">配料題（多選）</option>
+            <option value="amount">用量題（單選）</option>
+          </select>
+          <button class="btn-primary" id="startBtn">開始測驗</button>
         </div>
+        <div class="spacer"></div>
+        <span id="metaTop">進度：0/20｜得分：0/100</span>
       </div>
     </div>
 
-    <div id="card" class="card">
-      <div id="q"></div>
-      <div id="options"></div>
+    <div class="card" id="ruleCard">
+      <p><b>規則：</b>20 題，每題 5 分。</p>
+      <p><b>多選題評分：</b>每題滿分 5 分，正確選一項得 <b>5 / 正確數</b> 分；每多選一個錯誤扣同額（最低 0 分）。</p>
+      <p>
+        <b>標示：</b>
+        <span class="badge" style="background:#eafaf0;border:1px solid #22c55e;">綠底＝正確成分</span>
+        <span class="badge" style="background:#eafaf0;border:1px solid #ef4444;">紅框＝勾錯或漏選</span>
+      </p>
+    </div>
+
+    <div class="card" id="qaCard" style="display:none">
+      <div id="qtitle"></div>
+      <div id="optBox"></div>
       <div id="explain"></div>
-      <div class="actions">
-        <button id="submit" class="btn-ghost" disabled>送出答案</button>
-        <button id="next" class="btn-ghost" disabled>下一題</button>
+      <div class="control-row">
+        <button id="submitBtn" class="btn-primary">送出答案</button>
+        <button id="nextBtn" class="btn-ghost" disabled>下一題</button>
+        <div class="spacer"></div>
       </div>
     </div>
 
-    <div id="summary" class="card" style="display:none"></div>
+    <div class="card" id="resultCard" style="display:none">
+      <div id="resultText" class="scorebig"></div>
+      <div style="margin-top:10px"><button id="retryBtn" class="btn-primary">再試一次</button></div>
+    </div>
   </div>
 
 <script>
-/* ---- 基本設定 ---- */
-const TOTAL = 20, POINT = 5;
-const BG_INTERVAL = 10000;
-const BG_LIST = ['bg-1.jpg','bg-2.jpg','bg-3.jpg','bg-4.jpg','bg-5.jpg','bg-6.jpg'];
-
-const EXCLUDE_OPTIONS = new Set(['糖','加糖','茶']);
-const ALIASES = {
-  '錫蘭紅茶':'紅茶','茉香綠茶':'綠茶','文山青茶':'青茶','碳焙鐵觀音':'鐵觀音','玄米煎茶':'玄米',
-  '芝麻':'芝麻粉',
-  '甘蔗':'甘蔗汁','甘蔗汁':'甘蔗汁',
-  '芒樂':'芭樂'
-};
-const STOP_RE = /(補|至|去冰|加入|加料|退杯|淋上|鍵|滿|尖杯|不足|杯中|化開|不額外加糖)/;
-
-
-/* ------------------ 題庫（完整配方） ------------------ */
+/* ==== 背景輪播 ==== */
+const BG = ["bg1.jpg","bg2.jpg","bg3.jpg","bg4.jpg","bg5.jpg","bg6.jpg"];
+const DURATION_MS = 10000;
+const layerA = document.getElementById('bgA');
+const layerB = document.getElementById('bgB');
+let curBg=0,useA=true;
+function showSlide(i,first=false){
+  const t=useA?layerA:layerB, o=useA?layerB:layerA;
+  t.style.backgroundImage = `url("${BG[i]}")`;
+  if(first){ t.classList.add('show'); } else { requestAnimationFrame(()=>{ t.classList.add('show'); o.classList.remove('show'); }); }
+  useA=!useA;
+}
+showSlide(curBg,true);
+setInterval(()=>{ curBg=(curBg+1)%BG.length; showSlide(curBg); }, DURATION_MS);/* ========== 題庫（最新） ========== */
 const lines = `
 錫蘭紅茶｜紅茶；（糖鍵紅茶鍵）
 茉香綠茶｜綠茶；（糖鍵原茶鍵）
@@ -193,9 +193,9 @@ const lines = `
 冬瓜檸檬（M）｜檸檬30cc +  RO100 + 冬瓜茶；（不額外加糖） 
 冬瓜金桔（L）｜金桔40cc + RO100 + 冬瓜茶；（不額外加糖、3顆金桔） 
 冬瓜金桔（M）｜金桔30cc  + RO100 + 冬瓜茶；（不額外加糖、3顆金桔） 
-芒樂梅｜芒樂180g + RO+ 梅汁10cc + 冰塊；（糖鍵冰沙鍵）
+芭樂梅｜芭樂180g + RO+ 梅汁10cc + 冰塊；（糖鍵冰沙鍵）
 番茄梅｜番茄150g + RO+ 梅汁15cc + 冰塊；（糖鍵冰沙鍵）
-芒樂檸檬｜芒樂180g + RO + 梅汁5cc + 檸檬20cc + 冰塊；（糖鍵冰沙鍵）
+芭樂檸檬｜芭樂180g + RO + 梅汁5cc + 檸檬20cc + 冰塊；（糖鍵冰沙鍵）
 奇異果雪沙｜奇異果150g + RO  + 冰塊 + 檸檬5cc；（糖鍵冰沙鍵） 
 火龍果雪沙｜火龍果150g + RO + 冰塊；（糖鍵冰沙鍵）
 芒果雪沙｜芒果100g + RO + 冰塊 + 兩匙芒果丁；（糖鍵冰沙鍵） 
@@ -286,214 +286,162 @@ const lines = `
 蜜桃檸檬青｜水蜜桃果粒100g + 檸檬10cc + 青茶；（糖鍵柳橙鍵）
 `;
 
-/* ------------------ 工具 ------------------ */
-function norm(s){
-  if(!s) return null;
-  let x = s.replace(/[+；;、。，（）()]/g,'').replace(/\s+/g,'').trim();
-  if(!x || STOP_RE.test(x)) return null;
-  x = x.replace(/^RO\d+$/,'RO').replace(/^冰塊.*$/,'冰塊');
-  x = ALIASES[x] || x;
-  if (EXCLUDE_OPTIONS.has(x)) return null;
-  return x;
-}
-function cn2num(txt){
-  const map={'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-  if(/^\d+$/.test(txt)) return parseInt(txt,10);
-  if(txt==='十') return 10;
-  let m=txt.match(/^(十)([一二三四五六七八九])$/); if(m) return 10+map[m[2]];
-  m=txt.match(/^([一二三四五六七八九])十([一二三四五六七八九])?$/); if(m) return map[m[1]]*10+(m[2]?map[m[2]]:0);
-  m=txt.match(/^([一二三四五六七八九])$/); if(m) return map[m[1]];
-  return NaN;
-}
-function extractFacts(text){
-  const facts=[]; if(!text) return facts; let m;
-  let re1=/([\u4e00-\u9fa5A-Za-z（）()\/]+?)\s*([0-9一二兩三四五六七八九十]+)\s*(cc|g|匙|顆|罐)/g;
-  while((m=re1.exec(text))){
-    const ing=norm(m[1]); if(!ing) continue;
-    const num=cn2num(m[2]); const unit=m[3]; if(!isNaN(num)) facts.push({ingredient:ing,amount:num,unit});
-  }
-  let re2=/([0-9一二兩三四五六七八九十]+)\s*(cc|g|匙|顆|罐)\s*([\u4e00-\u9fa5A-Za-z（）()\/]+?)(?=[+；;、，\s]|$)/g;
-  while((m=re2.exec(text))){
-    const num=cn2num(m[1]); const unit=m[2]; const ing=norm(m[3]); if(!ing) continue;
-    if(!isNaN(num)) facts.push({ingredient:ing,amount:num,unit});
-  }
-  let reRO=/RO\s*?(\d+)/g; while((m=reRO.exec(text))) facts.push({ingredient:'RO',amount:parseInt(m[1],10),unit:'cc'});
-  const vocab=['RO','冰塊','紅茶','綠茶','青茶','鐵觀音','玄米','冬瓜茶','錫蘭奶茶','鮮奶','奶蓋',
-               '蜂蜜','黑糖','奶精','阿華田','可可粉','芝麻粉','杏仁粉','芋泥','紅豆','杏仁凍',
-               '百香','檸檬','金桔','柳橙','甘蔗汁','葡萄柚','奇亞籽','波霸','愛玉','蘆薈','仙草','奶酪布丁',
-               '芒果','芒果丁','鳳梨','火龍果','奇異果','番茄','酪梨','酪梨火龍果','毛豆','水蜜桃','芭樂','多多'];
-  const present=new Set(facts.map(f=>f.ingredient));
-  vocab.forEach(v=>{ if(text.includes(v)){ const n=norm(v); if(n && !present.has(n)) facts.push({ingredient:n,amount:null,unit:''}) }});
-  const seen={}; return facts.filter(f=>{ const k=f.ingredient+'|'+(f.amount??'')+'|'+(f.unit||''); if(seen[k]) return false; seen[k]=1; return true; });
-}
-const deck = lines.split(/\n+/).map(s=>s.trim()).filter(Boolean).map(s=>{ const p=s.split(/\s*[\|｜]\s*/); return {name:p[0],formula:p[1]||''}; });
-const GLOBAL_POOL = Array.from(new Set(deck.flatMap(d=>extractFacts(d.formula).map(f=>f.ingredient)))).filter(x=>x && !EXCLUDE_OPTIONS.has(x));
-const pick=a=>a[Math.floor(Math.random()*a.length)];
-function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+/* ========== 常量 / 規則 ========== */
+const TOTAL=20, POINT=5;
+const BANNED=new Set(["糖","加糖","茶"]);
+const ALIASES={"芝麻":"芝麻粉","百香果":"百香","金桔汁":"金桔","柳橙汁":"柳橙","葡萄柚汁":"葡萄柚","檸檬汁":"檸檬","甘蔗":"甘蔗汁"};
+const STOPWORDS_RE=/(糖鍵|補|至|去冰|加入|杯中|不足|化開|大杯鍵|中杯|鍵|滿|尖杯|不額外加糖|不加糖)/;
 
-function makeAmountQ(item){
-  const facts=extractFacts(item.formula).filter(f=>f.unit);
-  if(!facts.length) return null;
-  const t=pick(facts);
-  let wrongNums=[];
-  if(t.unit==='罐' || t.unit==='匙'){
-    const c=[t.amount-1,t.amount+1,t.amount+2,t.amount-2].filter(x=>x>0);
-    wrongNums=Array.from(new Set(c)).slice(0,3);
+function cn2num(txt){const m={'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};if(/^\d+(\.\d+)?$/.test(txt))return parseFloat(txt);if(txt==='十')return 10;let r=txt.match(/^(十)([一二三四五六七八九])$/);if(r)return 10+m[r[2]];r=txt.match(/^([一二三四五六七八九])十([一二三四五六七八九])?$/);if(r)return m[r[1]]*10+(r[2]?m[r[2]]:0);r=txt.match(/^([一二三四五六七八九])$/);if(r)return m[r[1]];return NaN;}
+function normIng(s){let x=(s||'').toString().trim();x=x.replace(/[+；;、。，（）()]/g,'').replace(/\s+/g,'');if(!x||STOPWORDS_RE.test(x))return null;x=ALIASES[x]||x;if(/^冰塊/.test(x))x='冰塊';if(/^RO\d+$/i.test(x))x='RO';return x;}
+function extractFacts(text){const facts=[];if(!text)return facts;let re1=/([\u4e00-\u9fa5A-Za-z（）()\/]+?)\s*([0-9]+(?:\.[0-9]+)?|[一二兩三四五六七八九十]+)\s*(cc|g|匙|顆|罐)?/g;let m;while((m=re1.exec(text))!==null){let ing=normIng(m[1]);if(!ing)continue;let numStr=m[2];let num=/^\d/.test(numStr)?parseFloat(numStr):cn2num(numStr);let unit=m[3]||'';if(ing&&!isNaN(num))facts.push({ingredient:ing,amount:num,unit});}
+let re2=/([0-9]+(?:\.[0-9]+)?|[一二兩三四五六七八九十]+)\s*(cc|g|匙|顆|罐)\s*([\u4e00-\u9fa5A-Za-z（）()\/]+?)(?=[+；;、，\s]|$)/g;
+while((m=re2.exec(text))!==null){let num=/^\d/.test(m[1])?parseFloat(m[1]):cn2num(m[1]);let unit=m[2];let ing=normIng(m[3]);if(!ing)continue;if(!isNaN(num))facts.push({ingredient:ing,amount:num,unit});}
+let reRO=/RO\s*?(\d+)/gi;while((m=reRO.exec(text))!==null){facts.push({ingredient:'RO',amount:parseFloat(m[1]),unit:'cc'});}
+const list=["紅茶","綠茶","青茶","鐵觀音","玄米","錫蘭奶茶","冬瓜茶","奶精","鮮奶","奶蓋","波霸","愛玉","蘆薈","仙草","阿華田","可可","芝麻粉","杏仁粉","紅豆","芋泥","奇亞籽","多多","梅汁","檸檬","金桔","柳橙","甘蔗汁","葡萄柚","百香","芒果丁","水蜜桃果粒","鳳梨","芒果","奇異果","火龍果","番茄","毛豆","RO","冰塊"];
+list.forEach(k=>{const raw=k.replace(/粉$/,'');if(text.includes(raw)&&!facts.some(f=>f.ingredient===k))facts.push({ingredient:k,amount:null,unit:''});});
+const seen=new Set(),out=[];for(const f of facts){const key=`${f.ingredient}|${f.amount??''}|${f.unit||''}`;if(!seen.has(key)){seen.add(key);out.push(f);}}return out;}
+
+const deck = lines.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{const p=l.split(/\s*[\|｜]\s*/);return {name:p[0],formula:p[1]||""};});
+const GLOBAL_INGS = Array.from(new Set(deck.flatMap(d=>extractFacts(d.formula).map(f=>f.ingredient)))).filter(x=>x && !BANNED.has(x));
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function pick(a){return a[Math.floor(Math.random()*a.length)]}
+function formatNum(n){return (Math.round(n*10)/10).toString().replace(/\.0$/,'')}
+
+function makeAmountQuestion(item){
+  const facts=extractFacts(item.formula).filter(f=>!!f.unit && !BANNED.has(f.ingredient));
+  if(!facts.length)return null;
+  const fact=pick(facts), unit=fact.unit, correctText=formatNum(fact.amount)+unit;
+  let options=[];
+  if(unit==='匙'||unit==='罐'){
+    const base=fact.amount, nums=new Set([base,base-.5,base+.5,base+1,base-1,1,2,3,4]);
+    options=Array.from(nums).filter(n=>n>0&&n<=6).map(n=>formatNum(n)+unit).slice(0,6);
   }else{
     const pool=[5,10,15,20,30,40,45,50,60,80,100,120,140,160,180,200,220,240,300];
-    wrongNums=pool.filter(x=>x!==t.amount).sort((a,b)=>Math.abs(a-t.amount)-Math.abs(b-t.amount)).slice(0,3);
+    const cand=pool.filter(v=>v!==fact.amount).sort((a,b)=>Math.abs(a-fact.amount)-Math.abs(b-fact.amount));
+    options=[correctText,...cand.slice(0,3).map(v=>v+unit)];
   }
-  const options=shuffle([`${t.amount}${t.unit}`, ...wrongNums.map(n=>`${n}${t.unit}`)]);
-  return {type:'amount', stem:`「${item.name}」中，<b>${t.ingredient}</b> 用量是多少？`, options, answer:`${t.amount}${t.unit}`, explain:`完整配方：${item.formula}`};
+  options=Array.from(new Set(options));
+  if(!options.includes(correctText))options[0]=correctText;
+  options=shuffle(options).slice(0,4);
+  if(!options.includes(correctText))options[0]=correctText,options=shuffle(options);
+  const qtext=`「${item.name}」中，<b>${fact.ingredient}</b>用量是多少？（單選）`;
+  return {type:'amount',item,q:qtext,options,answer:correctText,explain:`完整配方：${item.formula}`};
 }
-function makeMultiQ(item){
-  const facts=extractFacts(item.formula);
-  let present=Array.from(new Set(facts.map(f=>f.ingredient))).filter(Boolean).filter(x=>!EXCLUDE_OPTIONS.has(x));
-  if(present.length<2) return null;
-  const correctCount=Math.min(4, Math.max(2, Math.min(present.length,4)));
-  const correctOpts=shuffle(present).slice(0,correctCount);
-  const distract=GLOBAL_POOL.filter(x=>!correctOpts.includes(x));
-  const wrongNeed=Math.max(0, 5 - correctOpts.length);
-  const wrongOpts=shuffle(distract).slice(0,wrongNeed);
-  const options=shuffle([...correctOpts,...wrongOpts]);
-  return {type:'multi', stem:`請勾選「${item.name}」的所有正確成分（多選）。`, options, answers:new Set(correctOpts), explain:`完整：${item.formula}`};
-}
-function buildOne(mode){
-  let q=null, guard=0;
-  while(!q && guard++<400){
-    const it=pick(deck);
-    const t = (mode==='mixed') ? (Math.random()<0.5?'amount':'multi') : mode;
-    q = (t==='amount') ? makeAmountQ(it) : makeMultiQ(it);
-  }
-  return q;
+function makeIngredientQuestion(item){
+  const present=Array.from(new Set(extractFacts(item.formula).map(f=>f.ingredient))).filter(x=>x && !BANNED.has(x));
+  if(present.length<2)return null;
+  const correct=shuffle(present).slice(0,Math.min(3,Math.max(2,present.length)));
+  const distract=shuffle(GLOBAL_INGS.filter(x=>!present.includes(x))).slice(0,5-correct.length);
+  const options=shuffle([...correct,...distract]);
+  const qtext=`請勾選「${item.name}」的所有正確成分（多選）。`;
+  return {type:'ingredient',item,q:qtext,options,correct:new Set(correct),present,explain:`完整：${item.formula}`};
 }
 
-/* ---- 渲染/評分 ---- */
-let paper=[], idx=0, score=0, answered=false;
+/* 狀態與 DOM */
+let paper=[],idx=0,score=0,answered=false;
+const qtitle=document.getElementById('qtitle');
+const optBox=document.getElementById('optBox');
+const explain=document.getElementById('explain');
+const metaTop=document.getElementById('metaTop');
+const ruleCard=document.getElementById('ruleCard');
+const qaCard=document.getElementById('qaCard');
+const resultCard=document.getElementById('resultCard');
+const resultText=document.getElementById('resultText');
+const startBtn=document.getElementById('startBtn');
+const submitBtn=document.getElementById('submitBtn');
+const nextBtn=document.getElementById('nextBtn');
+const retryBtn=document.getElementById('retryBtn');
 
 function genPaper(){
-  const mode=document.getElementById('mode').value;
-  paper=[]; const seen=new Set();
-  while(paper.length<TOTAL){
-    const q=buildOne(mode); if(!q) continue;
-    const k=q.stem+'|'+(q.answer||Array.from(q.answers||[]).join(','));
-    if(seen.has(k)) continue; seen.add(k); paper.push(q);
+  paper=[];const mode=document.getElementById('mode').value;const used=new Set();let guard=0;
+  while(paper.length<TOTAL && guard<2000){
+    guard++;
+    const item=pick(deck);
+    const t=(mode==='mixed')?(Math.random()<0.55?'ingredient':'amount'):mode;
+    const q=(t==='amount')?makeAmountQuestion(item):makeIngredientQuestion(item);
+    if(!q)continue;
+    const key=q.q+'|'+('answer'in q?q.answer:Array.from(q.correct||[]).join(','));
+    if(used.has(key))continue;
+    used.add(key);paper.push(q);
   }
 }
-
-function updateMeta(){
-  const done=Math.min(idx+(answered?1:0),TOTAL);
-  document.getElementById('meta').textContent=`進度：${done}/${TOTAL}｜得分：${(Math.round(score*10)/10).toFixed(1)}/${TOTAL*POINT}`;
-}
-function enableSubmitIfAnySelection(){
-  const box=document.getElementById('options');
-  const has = !!box.querySelector('input:checked');
-  document.getElementById('submit').disabled = !has || answered;
-}
-
 function render(){
-  const submitBtn=document.getElementById('submit');
-  const nextBtn=document.getElementById('next');
-  submitBtn.disabled=true; nextBtn.disabled=true;
-
-  if(idx>=paper.length){ return showSummary(); }
-
+  if(idx>=paper.length){showResult();return;}
   const q=paper[idx];
-  const box=document.getElementById('options'); box.innerHTML='';
-  document.getElementById('card').style.display='block';
-  document.getElementById('summary').style.display='none';
-  document.getElementById('q').innerHTML=`第 ${idx+1} / ${TOTAL} 題｜${q.stem}`;
-  answered=false;
-
+  qaCard.style.display='block';resultCard.style.display='none';
+  qtitle.innerHTML=`第 ${idx+1} / ${TOTAL} 題｜${q.q}`;
+  optBox.innerHTML='';explain.textContent='';answered=false;nextBtn.disabled=true;
   if(q.type==='amount'){
-    q.options.forEach((t,i)=>{
-      const div=document.createElement('label');
-      div.className='opt';
-      div.innerHTML=`<input type="radio" name="opt"><b>${'ABCDE'[i]})</b> ${t}`;
-      div.querySelector('input').addEventListener('change', enableSubmitIfAnySelection);
-      box.appendChild(div);
-    });
+    q.options.forEach((opt,i)=>{const id='o'+i;const row=document.createElement('div');row.className='option';
+      row.innerHTML=`<input type="radio" name="opt" id="${id}"><label for="${id}">${['A','B','C','D'][i]}) ${opt}</label>`;optBox.appendChild(row);});
   }else{
-    q.options.forEach((t,i)=>{
-      const div=document.createElement('label');
-      div.className='opt';
-      div.innerHTML=`<input type="checkbox"><b>${'ABCDE'[i]})</b> ${t}`;
-      div.querySelector('input').addEventListener('change', enableSubmitIfAnySelection);
-      box.appendChild(div);
-    });
+    q.options.forEach((opt,i)=>{const id='o'+i;const row=document.createElement('div');row.className='option';
+      row.innerHTML=`<input type="checkbox" id="${id}"><label for="${id}">${['A','B','C','D','E'][i]||''}) ${opt}</label>`;optBox.appendChild(row);});
   }
-  document.getElementById('explain').textContent='';
-  enableSubmitIfAnySelection();
   updateMeta();
 }
+function updateMeta(){const done=Math.min(idx+(answered?1:0),TOTAL);metaTop.textContent=`進度：${done}/${TOTAL}｜得分：${Math.round(score*10)/10}/100`}
 
-function gradeCurrent(){
-  if(answered) return;
+/* 送出答案（修正多選取值索引錯誤 → 正確計分） */
+submitBtn.onclick=()=>{
+  if(idx>=paper.length)return;
   const q=paper[idx];
-  const box=document.getElementById('options');
-  const nodes=[...box.children];
-
   if(q.type==='amount'){
-    const checkedIdx = nodes.findIndex(n=>n.querySelector('input').checked);
-    if(checkedIdx<0) return;
-    const chosen = q.options[checkedIdx];
-    const ansIdx = q.options.indexOf(q.answer);
-    nodes[ansIdx].classList.add('correct');
-    if(chosen!==q.answer) nodes[checkedIdx].classList.add('wrong');
-    if(chosen===q.answer) score+=POINT;
+    const inputs=[...optBox.querySelectorAll('input[type=radio]')];
+    const sel=inputs.find(x=>x.checked); if(!sel)return;
     answered=true;
+    inputs.forEach((ipt)=>{const row=ipt.parentElement;const val=row.querySelector('label').textContent.replace(/^[A-E]\)\s*/,'').trim();
+      if(val===q.answer)row.classList.add('ok'); if(ipt.checked && val!==q.answer)row.classList.add('wrong'); ipt.disabled=true;});
+    const chosen=sel.nextElementSibling.textContent.replace(/^[A-E]\)\s*/,'').trim();
+    if(chosen===q.answer)score+=POINT;
+    explain.textContent=q.explain;
   }else{
-    const chosen=new Set(nodes.map((n,i)=> n.querySelector('input').checked ? q.options[i] : null).filter(Boolean));
-    let correctChosen=0, wrongChosen=0;
-    nodes.forEach((n,i)=>{
-      const opt=q.options[i], right=q.answers.has(opt), checked=chosen.has(opt);
-      if(right){
-        n.classList.add('correct');
-        if(!checked) n.classList.add('missed'); else correctChosen++;
-      }else{
-        if(checked){ n.classList.add('wrong'); wrongChosen++; }
-      }
-    });
-    const unit = POINT / q.answers.size;
-    const gain = Math.max(0, correctChosen*unit - wrongChosen*unit);
-    score += Math.round(gain*10)/10;
+    const rows=[...optBox.querySelectorAll('.option')];
+    const inputs=[...optBox.querySelectorAll('input[type=checkbox]')];
+
+    // 正確蒐集被勾選的值（修正：用原索引對應 rows）
+    const selected=new Set();
+    inputs.forEach((chk,i)=>{ if(chk.checked){ 
+      const v=rows[i].querySelector('label').textContent.replace(/^[A-E]\)\s*/,'').trim();
+      selected.add(v);
+    }});
     answered=true;
+
+    // 標示
+    inputs.forEach((chk,i)=>{
+      const row=rows[i];
+      const val=row.querySelector('label').textContent.replace(/^[A-E]\)\s*/,'').trim();
+      const isCorrect=q.correct.has(val), isSel=chk.checked;
+      if(isCorrect){ row.classList.add('ok'); if(!isSel)row.classList.add('miss'); }
+      else if(isSel){ row.classList.add('wrong'); }
+      chk.disabled=true;
+    });
+
+    // 計分（以真正應選個數為分母）
+    const unit = POINT / q.correct.size;
+    let s = 0;
+    selected.forEach(v=>{ s += q.correct.has(v) ? unit : -unit; });
+    if(s<0) s=0;
+    score += s;
+
+    explain.textContent=`本題得分：${Math.round(s*10)/10} / ${POINT}。完整配方：${q.item.formula}`;
   }
-  document.getElementById('explain').textContent=q.explain;
-  document.getElementById('submit').disabled=true;
-  document.getElementById('next').disabled=false;
-  updateMeta();
+  nextBtn.disabled=false; updateMeta();
+};
+nextBtn.onclick=()=>{ if(!answered)return; idx++; render(); };
+
+const startBtnEl=document.getElementById('startBtn');
+startBtnEl.onclick=()=>{ score=0;idx=0;genPaper();render();ruleCard.style.display='none'; };
+retryBtn.onclick=()=>{ score=0;idx=0;genPaper();render();resultCard.style.display='none';ruleCard.style.display='none'; };
+
+function showResult(){
+  qaCard.style.display='none';
+  const final=Math.round(score*10)/10;
+  resultText.textContent=`本次成績：${final.toFixed(1)} 分（滿分 100）`;
+  resultCard.style.display='block';
+  ruleCard.style.display='block';
 }
-
-function showSummary(){
-  const s=document.getElementById('summary'); s.style.display='block';
-  const final = (Math.round(score*10)/10).toFixed(1);     // ← 四捨五入到小數點一位
-  s.innerHTML=`
-    <div class="final-score"><b>本次成績：${final} 分</b>（滿分 ${TOTAL*POINT}）</div>
-    <button id="retry" class="btn-primary" style="margin-top:10px">再試一次</button>`;
-  document.getElementById('card').style.display='none';
-  document.getElementById('retry').onclick=startExam;
-}
-function startExam(){ idx=0; score=0; answered=false; genPaper(); render(); }
-
-/* ---- 背景輪播 ---- */
-(function slideshow(){
-  const A=document.getElementById('bgA'), B=document.getElementById('bgB');
-  let i=0, useA=true;
-  const set=(el,url)=>{ el.style.backgroundImage=`url('${url}')`; };
-  set(A,BG_LIST[0]); set(B,BG_LIST[1]); B.classList.add('hidden');
-  setInterval(()=>{
-    i = (i+1)%BG_LIST.length;
-    if(useA){ set(B, BG_LIST[i]); B.classList.remove('hidden'); A.classList.add('hidden'); }
-    else{ set(A, BG_LIST[i]); A.classList.remove('hidden'); B.classList.add('hidden'); }
-    useA=!useA;
-  }, BG_INTERVAL);
-})();
-
-/* ---- 綁定 ---- */
-document.getElementById('start').onclick=startExam;
-document.getElementById('submit').onclick=gradeCurrent;
-document.getElementById('next').onclick=()=>{ if(!answered) return; idx++; render(); };
 </script>
 </body>
 </html>
