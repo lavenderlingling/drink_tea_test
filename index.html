@@ -13,19 +13,24 @@
     --bad:#e74c3c;
     --bad-bg:#fdecea;
     --radius:14px;
+
+    /* 全域字級 */
+    --fz-base:18px;
+    --fz-base-mobile:17px;
   }
   html,body{height:100%;margin:0;font-family:system-ui,"PingFang TC","Noto Sans TC",sans-serif;color:#111}
+  html{font-size:var(--fz-base)}
+  @media (max-width:768px){ html{font-size:var(--fz-base-mobile)} }
+  body{font-size:1rem; line-height:1.8}
 
-  /* 背景：淡入淡出幻燈片 + 白色漸層遮罩 */
+  /* 背景：雙層 cross-fade + 白色漸層遮罩 */
   #bgWrap{position:fixed; inset:0; z-index:-2}
   .bgSlide{
     position:absolute; inset:0;
     background-position:center; background-size:cover;
-    opacity:0; transition:opacity 1.8s cubic-bezier(.22,.61,.36,1); /* 比 ease 更順的 ease-out */
+    opacity:0; transition:opacity 1.8s cubic-bezier(.22,.61,.36,1);
   }
   .bgSlide.show{opacity:1}
-
-  /* 保留原本的白色漸層遮罩 */
   #bgMask{
     position:fixed; inset:0; z-index:-1;
     background:linear-gradient(180deg, rgba(255,255,255,.88) 0%,
@@ -36,31 +41,35 @@
     pointer-events:none;
   }
 
-
   .shell{max-width:1080px;margin:26px auto;padding:0 16px}
   .toolbar{background:var(--card);backdrop-filter:blur(6px);border:1px solid #e5e7eb;border-radius:var(--radius);padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-  h1{flex:1 1 100%;text-align:center;margin:0 0 12px;font-size:26px;letter-spacing:2px}
+  h1{flex:1 1 100%;text-align:center;margin:0 0 12px;font-size:clamp(24px,2.6vw,36px);letter-spacing:2px}
   .tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;width:100%}
   label{color:#374151}
-  select,button{font-size:16px;padding:10px 14px;border-radius:12px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
+  select,button{font-size:1.06rem;padding:12px 18px;border-radius:12px;border:1px solid #d1d5db;background:#fff;cursor:pointer}
   .btn{background:#fff}
   .btn-primary{background:var(--ok);border-color:#0f9e72;color:#fff}
-  #metaTop{margin-left:auto;color:var(--muted)}
+  #metaTop{margin-left:auto;color:var(--muted);font-size:1.06rem}
 
   /* LOGO 固定左上 */
   #cornerLogo{position:fixed; left:18px; top:10px; width:72px; z-index:10; user-select:none; pointer-events:none}
 
   /* 規則卡片 */
   .rules{background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);padding:16px 18px;margin-top:12px}
-  .rules p{margin:18px 0} /* 三行間距更寬 */
+  .rules p{margin:20px 0}
   .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;border:1px solid #cbd5e1}
   .badge.ok{background:#e7f8f1;color:#0f9e72;border-color:#b5ead6}
   .badge.bad{background:#ffecec;color:#c23b2a;border-color:#ffc9c9}
 
   /* 題卡 */
   .card{background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);padding:18px;margin-top:16px}
-  #qtitle{font-size:20px;font-weight:700;margin:6px 0 12px}
-  .option{border:1px solid #d8dee6;border-radius:12px;padding:11px 14px;margin:8px 0;display:flex;align-items:center;gap:10px}
+  #qtitle{font-size:clamp(18px,2.2vw,24px);font-weight:700;margin:6px 0 12px}
+  .option{
+    border:1px solid #d8dee6;border-radius:12px;padding:12px 14px;margin:10px 0;
+    display:flex;align-items:center;gap:10px;cursor:pointer; user-select:none;
+    transition:background .2s, border-color .2s, box-shadow .2s;
+  }
+  .option:hover{box-shadow:0 1px 0 rgba(0,0,0,.04)}
   .option input{transform:scale(1.1)}
   .option label{flex:1;color:#111}
   .option.correct{border-color:var(--ok);background:var(--ok-bg)}
@@ -76,35 +85,37 @@
   #summary{display:none;margin-top:16px;background:var(--card);border:1px solid #e5e7eb;border-radius:var(--radius);padding:16px}
   #summary b{font-size:22px}
 
-  /* 手機優化：標題置中；工具列排版；選項字體略小 */
+  /* 手機優化：不改桌機配置 */
   @media (max-width:640px){
     #cornerLogo{left:12px; top:8px; width:58px}
     .toolbar{padding:12px}
-    h1{font-size:22px;margin:0 0 8px;letter-spacing:1.5px;text-align:center}
+    h1{margin:0 0 8px;letter-spacing:1.5px}
     .tools{
       display:grid;
       grid-template-columns: 1fr 1fr;
       grid-template-areas:
         "left left"
         "start meta";
-      gap:8px;
-      align-items:center;
+      gap:8px; align-items:center;
     }
     .tools > .left{grid-area:left; display:block; min-width:0}
     .tools > .left > label{display:block; margin-bottom:6px}
-    #mode{font-size:14px; padding:8px 10px; width:100%; max-width:none}
-    #startBtn{grid-area:start; font-size:14px; padding:10px 14px; justify-self:start; white-space:nowrap}
-    #metaTop{grid-area:meta; font-size:12px; justify-self:end; margin-left:0; white-space:nowrap}
+    #mode{font-size:1rem; padding:10px 12px; width:100%; max-width:none}
+    #startBtn{grid-area:start; font-size:1rem; padding:12px 16px; justify-self:start; white-space:nowrap}
+    #metaTop{grid-area:meta; font-size:.95rem; justify-self:end; margin-left:0; white-space:nowrap}
 
     .card{padding:14px}
     #qtitle{font-size:18px}
-    .option{padding:10px 12px}
-    .option label{font-size:15px}
+    .option{padding:12px 12px}
+    .option label{font-size:1.06rem}
   }
 </style>
 </head>
 <body>
+  <!-- 左上角 Logo（檔名放同層，例如 logo.png） -->
   <img id="cornerLogo" src="logo.png" alt="logo">
+
+  <!-- 背景：雙圖層 cross-fade -->
   <div id="bgWrap">
     <div id="bgA" class="bgSlide show"></div>
     <div id="bgB" class="bgSlide"></div>
@@ -131,15 +142,14 @@
     <div class="rules" id="rules">
       <p>規則：20 題，每題 5 分。</p>
       <p>多選題評分：每題滿分 5 分，正確選一項得 <b>5 / 正確數</b> 分；每多選一個錯誤扣同額（最低 0 分）。</p>
-      <p>標示：<span class="badge ok">綠底＝正確成分</span>
-        　<span class="badge bad">紅框＝勾錯或漏選</span></p>
+      <p>標示：<span class="badge ok">綠底＝正確成分</span>　<span class="badge bad">紅框＝勾錯或漏選</span></p>
     </div>
 
     <div class="card" id="card" style="display:none">
       <div id="qtitle"></div>
       <div id="options"></div>
 
-      <!-- 本題得分與完整配方分兩行（手機更好讀） -->
+      <!-- 解析 -->
       <div id="explain">
         <div id="scoreline"></div>
         <div id="formula"></div>
@@ -155,35 +165,33 @@
   </div>
 
 <script>
-/* ================= 背景淡入淡出幻燈片（較慢） ================= */
+/* =============== 背景 Cross-fade 幻燈片 =============== */
 (function(){
-  const imgs = ["bg1.jpg","bg2.jpg","bg3.jpg","bg4.jpg","bg5.jpg","bg6.jpg"];
-  const INTERVAL = 12000; // 每張 12 秒
+  const imgs = ["bg1.jpg","bg2.jpg","bg3.jpg","bg4.jpg","bg5.jpg","bg6.jpg"]; // 與 HTML 同層
+  const INTERVAL = 12000;
   const slides = [document.getElementById('bgA'), document.getElementById('bgB')];
   let cur = 0, i = 0;
-
   function setBG(el, url){ el.style.backgroundImage = `url('${url}')`; }
 
-  // 先載入首張再顯示，避免首畫面閃爍
   const first = new Image();
   first.onload = () => { setBG(slides[cur], first.src); slides[cur].classList.add('show'); };
   first.src = imgs[0];
 
   setInterval(()=> {
     i = (i + 1) % imgs.length;
-    const next = cur ^ 1;           // 0/1 互換
-    const img = new Image();        // 先預載，確保淡入順暢
+    const next = cur ^ 1;
+    const img = new Image();
     img.onload = () => {
       setBG(slides[next], img.src);
-      slides[next].classList.add('show');     // 下一張淡入
-      slides[cur].classList.remove('show');   // 當前淡出
+      slides[next].classList.add('show');
+      slides[cur].classList.remove('show');
       cur = next;
     };
     img.src = imgs[i];
   }, INTERVAL);
 })();
 
-/* ===================== 題庫（更新版） ===================== */
+/* ===================== 題庫 ===================== */
 const lines = `
 錫蘭紅茶｜紅茶；（糖鍵紅茶鍵）
 茉香綠茶｜綠茶；（糖鍵原茶鍵）
@@ -355,205 +363,155 @@ const lines = `
 
 /* ============= 成分總表與同義詞（過濾糖/茶、同義規則） ============= */
 const ING_MASTER = [
-  // 基底 / 水
   'RO','冰塊',
-  // 茶類/奶茶類
   '紅茶','綠茶','青茶','鐵觀音','玄米','冬瓜茶','錫蘭奶茶',
-  // 水果/食材
   '鳳梨','芒果','奇異果','火龍果','番茄','酪梨','毛豆','水蜜桃','芭樂','葡萄柚','柳橙',
-  // 調味/粉
   '蜂蜜','黑糖','奶精','阿華田','可可粉','芝麻粉','杏仁粉','芋泥','紅豆','杏仁凍','奇亞籽','梅汁','金桔','奶蓋','芒果丁',
-  // Topping
   '波霸','愛玉','蘆薈','仙草','奶酪布丁','多多','鮮奶',
-  // 特別
   '百香','檸檬','甘蔗汁'
 ];
-
-// 文字清洗與同義詞
 const ALIASES = {
   '錫蘭紅茶':'紅茶','茉香綠茶':'綠茶','文山青茶':'青茶','碳焙鐵觀音':'鐵觀音','玄米煎茶':'玄米',
   '百香果':'百香','檸檬汁':'檸檬','金桔汁':'金桔','柳橙汁':'柳橙','葡萄柚汁':'葡萄柚',
   '阿華田粉':'阿華田','可可':'可可粉','芝麻':'芝麻粉',
-  '芒樂':'芭樂','甘蔗':'甘蔗汁'    // 指定需求
+  '芒樂':'芭樂','甘蔗':'甘蔗汁'
 };
-// 需要略過的詞（不當作成分）
 const STOPWORDS_RE = /(加糖|糖鍵|不額外加糖|杯中|加入|補|至|去冰|退杯|化開|鍵|不足|滿|顆|罐|匙|分滿|L|M|\+茶|茶100)/;
 
-/* 數字中文轉阿拉伯 */
+/* 工具 */
 function cn2num(txt){
-  const map = {'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
-  if (/^\d+(\.\d+)?$/.test(txt)) return parseFloat(txt);
-  if (txt==='十') return 10;
-  let m = txt.match(/^十([一二三四五六七八九])$/); if(m) return 10+map[m[1]];
-  m = txt.match(/^([一二三四五六七八九])十([一二三四五六七八九])?$/); if(m) return map[m[1]]*10+(m[2]?map[m[2]]:0);
-  m = txt.match(/^([一二三四五六七八九])$/); if(m) return map[m[1]];
+  const map={'零':0,'一':1,'二':2,'兩':2,'三':3,'四':4,'五':5,'六':6,'七':7,'八':8,'九':9,'十':10};
+  if(/^\d+(\.\d+)?$/.test(txt)) return parseFloat(txt);
+  if(txt==='十') return 10;
+  let m=txt.match(/^十([一二三四五六七八九])$/); if(m) return 10+map[m[1]];
+  m=txt.match(/^([一二三四五六七八九])十([一二三四五六七八九])?$/); if(m) return map[m[1]]*10+(m[2]?map[m[2]]:0);
+  m=txt.match(/^([一二三四五六七八九])$/); if(m) return map[m[1]];
   return NaN;
 }
 function normalizeIngredient(s){
-  let ing = (s||'').toString().trim();
-  ing = ing.replace(/[；;、。，（）()]/g,'').replace(/\s+/g,'');
+  let ing=(s||'').toString().trim();
+  ing=ing.replace(/[；;、。，（）()]/g,'').replace(/\s+/g,'');
   if(!ing || STOPWORDS_RE.test(ing)) return null;
-  if(ALIASES[ing]) ing = ALIASES[ing];
-  // RO100 → RO
-  if(/^RO\d+/.test(ing)) ing = 'RO';
-  // 任何「茶」單字作為通用選項移除
-  if(ing==='茶') return null;
+  if(ALIASES[ing]) ing=ALIASES[ing];
+  if(/^RO\d+/.test(ing)) ing='RO';
+  if(ing==='茶') return null; // 不出現通用「茶」
+  if(ing==='糖') return null; // 永不出現「糖」
   return ing;
 }
 
-/* 解析配方：抓成分與數量 */
+/* 解析配方 */
 function extractFacts(formula){
-  const facts=[];
-  const text = (formula||'').replace(/\s+/g,' ').trim();
+  const facts=[]; const text=(formula||'').replace(/\s+/g,' ').trim();
+  const presentSet=new Set();
 
-  // A) 先把 master 都掃過（是否出現）
-  const presentSet = new Set();
+  // 依 master 掃過（是否出現）
   for(const raw of ING_MASTER){
-    const tag = normalizeIngredient(raw);
-    if(!tag) continue;
+    const tag=normalizeIngredient(raw); if(!tag) continue;
     if(text.includes(tag)) presentSet.add(tag);
   }
-  // 額外字面上出現但不是 master，也做別名轉換
-  for(const k in ALIASES){
-    if(text.includes(k)) presentSet.add(normalizeIngredient(k));
-  }
+  for(const k in ALIASES){ if(text.includes(k)) presentSet.add(normalizeIngredient(k)); }
 
-  // B) 擷取「數字+單位+成分」或「成分+數字單位」
-  const pairA = /([一二兩三四五六七八九十\d\.]+)\s*(cc|g|匙|顆|罐)\s*([A-Za-z\u4e00-\u9fa5（）()]+?)(?=[+；;、，\s]|$)/g;
-  const pairB = /([A-Za-z\u4e00-\u9fa5（）()]+?)\s*([一二兩三四五六七八九十\d\.]+)\s*(cc|g|匙|顆|罐)/g;
-
+  // 數量模式
+  const pairA=/([一二兩三四五六七八九十\d\.]+)\s*(cc|g|匙|顆|罐)\s*([A-Za-z\u4e00-\u9fa5（）()]+?)(?=[+；;、，\s]|$)/g;
+  const pairB=/([A-Za-z\u4e00-\u9fa5（）()]+?)\s*([一二兩三四五六七八九十\d\.]+)\s*(cc|g|匙|顆|罐)/g;
   let m;
   while((m=pairA.exec(text))!==null){
-    const amount = cn2num(m[1]);
-    const unit = m[2]; const ing = normalizeIngredient(m[3]);
+    const amount=cn2num(m[1]), unit=m[2], ing=normalizeIngredient(m[3]);
     if(ing && !isNaN(amount)) facts.push({ingredient:ing,amount,unit});
   }
   while((m=pairB.exec(text))!==null){
-    const ing = normalizeIngredient(m[1]); const amount = cn2num(m[2]); const unit = m[3];
+    const ing=normalizeIngredient(m[1]), amount=cn2num(m[2]), unit=m[3];
     if(ing && !isNaN(amount)) facts.push({ingredient:ing,amount,unit});
   }
-  // RO100 特例
-  const mRO = text.match(/RO\s*?(\d+)/); if(mRO) facts.push({ingredient:'RO',amount:parseInt(mRO[1],10),unit:'cc'});
+  const mRO=text.match(/RO\s*?(\d+)/); if(mRO) facts.push({ingredient:'RO',amount:parseInt(mRO[1],10),unit:'cc'});
 
-  // 也把 presentSet 補進 facts（amount=null）
-  for(const ing of presentSet){
-    if(!facts.some(f=>f.ingredient===ing)) facts.push({ingredient:ing,amount:null,unit:''});
-  }
-  // 去重
-  const seen={};
-  return facts.filter(f=>{const k=f.ingredient+'|'+(f.amount??'')+'|'+(f.unit||''); if(seen[k])return false; seen[k]=1; return true;});
+  for(const ing of presentSet){ if(!facts.some(f=>f.ingredient===ing)) facts.push({ingredient:ing,amount:null,unit:''}); }
+  const seen={}; return facts.filter(f=>{const k=f.ingredient+'|'+(f.amount??'')+'|'+(f.unit||''); if(seen[k])return false; seen[k]=1; return true;});
 }
 
-/* 準備題庫物件 */
+/* 準備題庫 */
 const deck = lines.split(/\n+/).map(l=>l.trim()).filter(Boolean).map(l=>{
-  const p = l.split(/\s*[\|｜]\s*/); return {name:p[0], formula:p[1]||""};
+  const p=l.split(/\s*[\|｜]\s*/); return {name:p[0], formula:p[1]||""};
 });
-
-/* 全域成分池（作為出題錯誤選項來源） */
 const GLOBAL_POOL = Array.from(new Set(
   deck.flatMap(d=>extractFacts(d.formula).map(f=>f.ingredient)).concat(ING_MASTER)
 )).filter(Boolean);
 
-/* 工具 */
 function shuffle(a){ for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]} return a; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 
 /* 生成「用量題」 */
 function makeAmountQuestion(item){
-  const facts = extractFacts(item.formula).filter(f=>f.unit);
+  const facts=extractFacts(item.formula).filter(f=>f.unit);
   if(!facts.length) return null;
-  const fact = pick(facts);
-  const correctText = `${fact.amount}${fact.unit}`;
-
-  let wrongNums = [];
-  if(fact.unit==='匙' || fact.unit==='罐' || fact.unit==='顆'){
-    const baseSet = [1,2,3,4,5].filter(n=>n!==fact.amount);
-    wrongNums = shuffle(baseSet).slice(0,2).concat([fact.amount+ (fact.amount>=3?-1:1)]).filter((v,i,self)=>self.indexOf(v)===i);
+  const fact=pick(facts), correctText=`${fact.amount}${fact.unit}`;
+  let wrongNums=[];
+  if(['匙','罐','顆'].includes(fact.unit)){
+    const base=[1,2,3,4,5].filter(n=>n!==fact.amount);
+    wrongNums = shuffle(base).slice(0,2).concat([fact.amount+(fact.amount>=3?-1:1)]);
+    wrongNums=[...new Set(wrongNums)].slice(0,3);
   }else{
-    const pool=[30,40,45,50,60,80,100,120,140,160,180,200,220,240,300]
-      .filter(v=>v!==fact.amount).sort((a,b)=>Math.abs(a-fact.amount)-Math.abs(b-fact.amount));
-    wrongNums = pool.slice(0,3);
+    const pool=[30,40,45,50,60,80,100,120,140,160,180,200,220,240,300].filter(v=>v!==fact.amount)
+      .sort((a,b)=>Math.abs(a-fact.amount)-Math.abs(b-fact.amount));
+    wrongNums=pool.slice(0,3);
   }
-  const options = shuffle([correctText, ...wrongNums.map(v=>`${v}${fact.unit}`)]);
-
-  return {
-    type:'amount',
-    multi:false,
-    q:`「${item.name}」中，<b>${fact.ingredient}</b> 用量是多少？`,
-    options,
-    answer:correctText,
-    explain:`完整配方：${item.formula}`
-  };
+  const options=shuffle([correctText, ...wrongNums.map(v=>`${v}${fact.unit}`)]);
+  return {type:'amount',multi:false,q:`「${item.name}」中，<b>${fact.ingredient}</b> 用量是多少？`,options,answer:correctText,explain:`完整配方：${item.formula}`};
 }
 
-/* 生成「多選成分題」：從候選中選出所有正確成分 */
+/* 生成「多選成分題」 */
 function makeIngredientQuestion(item){
-  const facts = extractFacts(item.formula);
-  const present = Array.from(new Set(facts.map(f=>f.ingredient))).filter(Boolean);
-  // 避免題目成分過少
+  const facts=extractFacts(item.formula);
+  const present=Array.from(new Set(facts.map(f=>f.ingredient))).filter(Boolean);
   if(present.length<2) return null;
-
-  const correctPick = shuffle(present).slice( Math.min(2,present.length-1), Math.min(4,present.length) ); // 動態取 2~3 個
-  if(correctPick.length<2){ correctPick.length=0; correctPick.push(...shuffle(present).slice(0,2)); }
-
+  let correctPick = shuffle(present).slice(Math.min(2,present.length-1), Math.min(4,present.length));
+  if(correctPick.length<2) correctPick = shuffle(present).slice(0,2);
   const absent = GLOBAL_POOL.filter(x=>!present.includes(x));
   const wrongs = shuffle(absent.filter(x=>x!=='糖' && x!=='加糖' && x!=='茶')).slice(0, 5 - correctPick.length);
   const opts = shuffle([...correctPick, ...wrongs]);
-
-  return {
-    type:'ingredientAll',
-    multi:true,
-    q:`請勾選「${item.name}」的所有正確成分（多選）。`,
-    options:opts,
-    correctSet:new Set(correctPick),
-    explain:`完整配方：${item.formula}`
-  };
+  return {type:'ingredientAll',multi:true,q:`請勾選「${item.name}」的所有正確成分（多選）。`,options:opts,correctSet:new Set(correctPick),explain:`完整配方：${item.formula}`};
 }
 
 /* 組 20 題 */
-const TOTAL = 20, POINT = 5;
+const TOTAL=20, POINT=5;
 let paper=[], idx=0, totalScore=0, answered=false;
 
 function buildOne(mode){
-  let guard=0, q=null;
+  let guard=0,q=null;
   while(!q && guard<200){
     guard++;
-    const item = pick(deck);
-    const m = (mode==='mixed') ? (Math.random()<0.5?'amount':'ingredientAll') : mode;
-    q = (m==='amount') ? makeAmountQuestion(item) : makeIngredientQuestion(item);
+    const item=pick(deck);
+    const m=(mode==='mixed') ? (Math.random()<0.5?'amount':'ingredientAll') : mode;
+    q=(m==='amount')?makeAmountQuestion(item):makeIngredientQuestion(item);
   }
   return q;
 }
 function genPaper(){
   paper=[]; const seen=new Set(); const mode=document.getElementById('mode').value;
   while(paper.length<TOTAL){
-    const q=buildOne(mode);
-    if(!q) continue;
-    const key=q.q+'|'+(q.answer||[...q.correctSet].join(','));
-    if(seen.has(key)) continue; seen.add(key);
-    paper.push(q);
+    const q=buildOne(mode); if(!q) continue;
+    const key=q.q+'|'+(q.answer||[...q.correctSet].join(',')); if(seen.has(key)) continue;
+    seen.add(key); paper.push(q);
   }
 }
 
-/* UI 渲染 */
-const qtitle = document.getElementById('qtitle');
-const optionsBox = document.getElementById('options');
-const metaTop = document.getElementById('metaTop');
-const explainBox = document.getElementById('explain');
-const scoreline = document.getElementById('scoreline');
-const formulaLine = document.getElementById('formula');
+/* UI */
+const qtitle=document.getElementById('qtitle');
+const optionsBox=document.getElementById('options');
+const metaTop=document.getElementById('metaTop');
+const explainBox=document.getElementById('explain');
+const scoreline=document.getElementById('scoreline');
+const formulaLine=document.getElementById('formula');
 
 function updateMeta(){
-  metaTop.textContent = `進度：${Math.min(idx + (answered?1:0), TOTAL)}/${TOTAL}｜得分：${totalScore.toFixed(1)}/${TOTAL*POINT}`;
+  metaTop.textContent=`進度：${Math.min(idx+(answered?1:0),TOTAL)}/${TOTAL}｜得分：${totalScore.toFixed(1)}/${TOTAL*POINT}`;
 }
 function renderCurrent(){
   if(idx>=paper.length){ showSummary(); return; }
-
   const q=paper[idx];
   document.getElementById('card').style.display='block';
   document.getElementById('summary').style.display='none';
-
-  qtitle.innerHTML = `第 ${idx+1} / ${TOTAL} 題｜${q.q}`;
+  qtitle.innerHTML=`第 ${idx+1} / ${TOTAL} 題｜${q.q}`;
   optionsBox.innerHTML=''; explainBox.style.display='none';
   document.getElementById('submitBtn').disabled=false;
   document.getElementById('nextBtn').disabled=true;
@@ -561,69 +519,63 @@ function renderCurrent(){
 
   const letters=['A','B','C','D','E'];
   q.options.forEach((opt,i)=>{
-    const wrap=document.createElement('div'); wrap.className='option';
+    const wrap=document.createElement('div'); wrap.className='option'; wrap.dataset.value=opt;
     const input=document.createElement('input'); input.type=q.multi?'checkbox':'radio'; input.name='opt';
     const lab=document.createElement('label'); lab.innerHTML=`<b>${letters[i]})</b> ${opt}`;
-    wrap.appendChild(input); wrap.appendChild(lab);
-    wrap.dataset.value=opt; optionsBox.appendChild(wrap);
+    wrap.appendChild(input); wrap.appendChild(lab); optionsBox.appendChild(wrap);
+
+    /* 讓整個方框可點（單選互斥、多選可勾多個） */
+    wrap.addEventListener('click', (e)=>{
+      if(answered) return;
+      // 避免點到 input 時被預設行為與手動切換重複
+      if(e.target.tagName !== 'INPUT') e.preventDefault();
+      if(q.multi){
+        input.checked = !input.checked;
+      }else{
+        [...optionsBox.querySelectorAll('input')].forEach(el=>el.checked=false);
+        input.checked=true;
+      }
+    });
   });
 }
 
-/* 判分（多選） */
+/* 多選計分 */
 function scoreMulti(q, chosenArr){
-  const correct = q.correctSet;
-  const inOptionsCorrect = q.options.filter(o=>correct.has(o));
-  const per = POINT / inOptionsCorrect.length;
+  const correct=q.correctSet;
+  const inOptionsCorrect=q.options.filter(o=>correct.has(o));
+  const per=POINT/inOptionsCorrect.length;
 
-  // 標記
-  const map = new Map(); // val -> element
-  [...optionsBox.children].forEach(div=>map.set(div.dataset.value, div));
-
+  const map=new Map(); [...optionsBox.children].forEach(div=>map.set(div.dataset.value,div));
   let add=0;
-  // 被勾選
   chosenArr.forEach(v=>{
-    if(correct.has(v)){
-      add += per; map.get(v).classList.add('correct');
-    }else{
-      map.get(v).classList.add('wrong'); // 勾錯
-      add -= per;
-    }
+    if(correct.has(v)){ add+=per; map.get(v).classList.add('correct'); }
+    else{ map.get(v).classList.add('wrong'); add-=per; }
   });
-  // 漏選（正確但沒勾）
-  inOptionsCorrect.forEach(v=>{
-    if(!chosenArr.includes(v)){
-      map.get(v).classList.add('missed');
-    }
-  });
+  inOptionsCorrect.forEach(v=>{ if(!chosenArr.includes(v)) map.get(v).classList.add('missed'); });
 
   if(add<0) add=0;
-  add = Math.round(add*10)/10; // 到小數 1 位
-  return add;
+  return Math.round(add*10)/10;
 }
 
 /* 送出答案 */
-document.getElementById('submitBtn').onclick = ()=>{
+document.getElementById('submitBtn').onclick=()=>{
   if(answered) return;
   const q=paper[idx];
-  const chosen = [...optionsBox.querySelectorAll('input')]
-                  .filter(el=>el.checked).map(el=>el.parentElement.dataset.value);
-
+  const chosen=[...optionsBox.querySelectorAll('input')].filter(el=>el.checked).map(el=>el.parentElement.dataset.value);
   let add=0;
+
   if(q.type==='amount'){
-    // 單選
-    const map = new Map(); [...optionsBox.children].forEach(div=>map.set(div.dataset.value, div));
-    const ansDiv = map.get(q.answer); ansDiv.classList.add('correct');
-    if(chosen.length && chosen[0]===q.answer){ add=POINT; } else if(chosen.length){
-      map.get(chosen[0]).classList.add('wrong');
-    }
+    const map=new Map(); [...optionsBox.children].forEach(div=>map.set(div.dataset.value,div));
+    map.get(q.answer).classList.add('correct');
+    if(chosen.length && chosen[0]===q.answer) add=POINT;
+    else if(chosen.length) map.get(chosen[0]).classList.add('wrong');
   }else{
-    // 多選
-    add = scoreMulti(q, chosen);
+    add=scoreMulti(q, chosen);
   }
 
-  totalScore += add;
-  scoreline.textContent = `本題得分：${add} / ${POINT}`;
-  formulaLine.textContent = q.explain;
+  totalScore+=add;
+  scoreline.textContent=`本題得分：${add} / ${POINT}`;
+  formulaLine.textContent=q.explain;
   explainBox.style.display='block';
 
   answered=true; updateMeta();
@@ -632,29 +584,23 @@ document.getElementById('submitBtn').onclick = ()=>{
 };
 
 /* 下一題 */
-document.getElementById('nextBtn').onclick = ()=>{
-  if(!answered) return;
-  idx++; renderCurrent();
-};
+document.getElementById('nextBtn').onclick=()=>{ if(!answered) return; idx++; renderCurrent(); };
 
-/* 開始/總結 */
+/* 總結/開始 */
 function showSummary(){
   const sum=document.getElementById('summary');
-  sum.style.display='block';
-  document.getElementById('card').style.display='none';
-  const score = Math.round(totalScore*10)/10;
-  sum.innerHTML = `<b>本次成績：${score} 分（滿分 ${TOTAL*POINT}）</b><br><br>
-  <button class="btn btn-primary" id="retry">再試一次</button>`;
+  sum.style.display='block'; document.getElementById('card').style.display='none';
+  const score=Math.round(totalScore*10)/10;
+  sum.innerHTML=`<b>本次成績：${score} 分（滿分 ${TOTAL*POINT}）</b><br><br><button class="btn btn-primary" id="retry">再試一次</button>`;
   document.getElementById('rules').style.display='block';
   document.getElementById('retry').onclick=startExam;
 }
-
 function startExam(){
   idx=0; totalScore=0; answered=false;
   genPaper(); renderCurrent(); updateMeta();
   document.getElementById('rules').style.display='none';
 }
-document.getElementById('startBtn').onclick = startExam;
+document.getElementById('startBtn').onclick=startExam;
 </script>
 </body>
 </html>
