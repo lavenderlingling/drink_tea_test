@@ -17,12 +17,25 @@
   html,body{height:100%;margin:0;font-family:system-ui,"PingFang TC","Noto Sans TC",sans-serif;color:#111}
 
   /* 背景：淡入淡出幻燈片 + 白色漸層遮罩 */
-  #bg{position:fixed; inset:0; z-index:-2; background-position:center; background-size:cover; transition:opacity 1.2s ease; opacity:1}
-  #bg.fade{opacity:0}
-  #bgMask{position:fixed; inset:0; z-index:-1;
-    background:linear-gradient(180deg, rgba(255,255,255,.88) 0%, rgba(255,255,255,.88) 28%, rgba(255,255,255,.85) 45%, rgba(255,255,255,.84) 62%, rgba(255,255,255,.82) 100%);
+  #bgWrap{position:fixed; inset:0; z-index:-2}
+  .bgSlide{
+    position:absolute; inset:0;
+    background-position:center; background-size:cover;
+    opacity:0; transition:opacity 1.8s cubic-bezier(.22,.61,.36,1); /* 比 ease 更順的 ease-out */
+  }
+  .bgSlide.show{opacity:1}
+
+  /* 保留原本的白色漸層遮罩 */
+  #bgMask{
+    position:fixed; inset:0; z-index:-1;
+    background:linear-gradient(180deg, rgba(255,255,255,.88) 0%,
+                                       rgba(255,255,255,.88) 28%,
+                                       rgba(255,255,255,.85) 45%,
+                                       rgba(255,255,255,.84) 62%,
+                                       rgba(255,255,255,.82) 100%);
     pointer-events:none;
   }
+
 
   .shell{max-width:1080px;margin:26px auto;padding:0 16px}
   .toolbar{background:var(--card);backdrop-filter:blur(6px);border:1px solid #e5e7eb;border-radius:var(--radius);padding:16px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center}
@@ -92,7 +105,10 @@
 </head>
 <body>
   <img id="cornerLogo" src="logo.png" alt="logo">
-  <div id="bg"></div>
+  <div id="bgWrap">
+    <div id="bgA" class="bgSlide show"></div>
+    <div id="bgB" class="bgSlide"></div>
+  </div>
   <div id="bgMask"></div>
 
   <div class="shell">
@@ -142,19 +158,29 @@
 /* ================= 背景淡入淡出幻燈片（較慢） ================= */
 (function(){
   const imgs = ["bg1.jpg","bg2.jpg","bg3.jpg","bg4.jpg","bg5.jpg","bg6.jpg"];
-  const INTERVAL = 12000;   // 每張 12 秒
-  const FADE_MS  = 700;     // 切換時等待（對應 CSS transition 的一部分）
-  let idx = 0, bg = document.getElementById('bg');
+  const INTERVAL = 12000; // 每張 12 秒
+  const slides = [document.getElementById('bgA'), document.getElementById('bgB')];
+  let cur = 0, i = 0;
 
-  function show(i){
-    bg.classList.add('fade');                 // 淡出
-    setTimeout(()=>{                          // 換圖
-      bg.style.backgroundImage = `url('${imgs[i]}')`;
-      bg.classList.remove('fade');            // 淡入
-    }, FADE_MS);
-  }
-  show(0);
-  setInterval(()=>{ idx = (idx+1)%imgs.length; show(idx); }, INTERVAL);
+  function setBG(el, url){ el.style.backgroundImage = `url('${url}')`; }
+
+  // 先載入首張再顯示，避免首畫面閃爍
+  const first = new Image();
+  first.onload = () => { setBG(slides[cur], first.src); slides[cur].classList.add('show'); };
+  first.src = imgs[0];
+
+  setInterval(()=> {
+    i = (i + 1) % imgs.length;
+    const next = cur ^ 1;           // 0/1 互換
+    const img = new Image();        // 先預載，確保淡入順暢
+    img.onload = () => {
+      setBG(slides[next], img.src);
+      slides[next].classList.add('show');     // 下一張淡入
+      slides[cur].classList.remove('show');   // 當前淡出
+      cur = next;
+    };
+    img.src = imgs[i];
+  }, INTERVAL);
 })();
 
 /* ===================== 題庫（更新版） ===================== */
